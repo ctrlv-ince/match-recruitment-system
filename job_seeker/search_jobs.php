@@ -15,19 +15,26 @@ if (isset($_GET['search'])) {
 }
 
 // Fetch job seeker's skills
-$sql = "SELECT skills FROM job_seekers WHERE seeker_id = $user_id";
+// Fetch job seeker's skills and location
+$sql = "SELECT skills, location FROM job_seekers WHERE seeker_id = $user_id";
 $result = $conn->query($sql);
-$seeker_skills = $result->fetch_assoc()['skills'];
+$seeker_data = $result->fetch_assoc();
+$seeker_skills = $seeker_data['skills'];
+$seeker_location = $seeker_data['location'];
 
-// Fetch approved jobs that match the search term and prioritize jobs with matching skills
+// Fetch approved jobs that match the search term, skills, and location
 $sql = "SELECT *, 
         CASE 
             WHEN skills LIKE '%$seeker_skills%' THEN 1 
             ELSE 0 
-        END AS skill_match 
+        END AS skill_match,
+        CASE 
+            WHEN location = '$seeker_location' THEN 1 
+            ELSE 0 
+        END AS location_match 
         FROM job_postings 
         WHERE status = 'approved' AND (title LIKE '%$search%' OR skills LIKE '%$search%') 
-        ORDER BY skill_match DESC, title ASC";
+        ORDER BY location_match DESC, skill_match DESC, title ASC";
 $result = $conn->query($sql);
 ?>
 
@@ -59,8 +66,12 @@ $result = $conn->query($sql);
                 echo "<p class='card-text'>{$row['description']}</p>";
                 echo "<p class='card-text'><strong>Requirements:</strong> {$row['requirements']}</p>";
                 echo "<p class='card-text'><strong>Skills:</strong> {$row['skills']}</p>";
-                if (strpos($row['skills'], $seeker_skills) !== false) {
+                echo "<p class='card-text'><strong>Location:</strong> {$row['location']}</p>";
+                if (!empty($seeker_skills) && strpos($row['skills'], $seeker_skills) !== false) {
                     echo "<p class='text-success'><strong>This job matches your skills!</strong></p>";
+                }
+                if ($row['location'] === $seeker_location) {
+                    echo "<p class='text-success'><strong>This job is in your location!</strong></p>";
                 }
                 echo "<a href='view_job.php?id={$row['job_id']}' class='btn btn-primary'>View Details</a>";
                 echo "</div>";

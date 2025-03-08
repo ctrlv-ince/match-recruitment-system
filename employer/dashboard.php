@@ -60,8 +60,7 @@ $user = $result->fetch_assoc();
         </a>
         <hr>
         <a href="post_job.php" class="btn btn-primary">Post a Job</a>
-        <a href="schedule_interview.php" class="btn btn-primary">Schedule Interviews</a>
-        <a href="view_interview.php" class="btn btn-primary">View Interviews</a>    
+        <a href="schedule_interview.php" class="btn btn-primary">Schedule Interviews</a> 
         <a href="logout.php" class="btn btn-danger">Logout</a>
     </div>
 </body>

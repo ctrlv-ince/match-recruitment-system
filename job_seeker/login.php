@@ -1,4 +1,5 @@
 <?php
+session_start();
 include '../db.php';
 
 $message = ''; // To display success or error messages
@@ -14,12 +15,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password_hash'])) {
-            // Start a session and redirect to dashboard
-            session_start();
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['user_type'] = $user['user_type'];
-            header("Location: dashboard.php");
-            exit();
+            // Check if the user is verified
+            if ($user['status'] === 'verified') {
+                // Start a session and redirect to the job seeker dashboard
+                session_start();
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['user_type'] = $user['user_type'];
+                header("Location: dashboard.php");
+                exit();
+            } else {
+                $message = "Your account is not yet verified. Please contact support.";
+            }
         } else {
             $message = "Invalid email or password.";
         }
