@@ -9,17 +9,34 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
 }
 
 if (isset($_GET['id']) && isset($_GET['action'])) {
-    $employer_id = $_GET['id'];
+    $user_id = $_GET['id'];
     $action = $_GET['action'];
 
-    // Update employer verification status
-    $status = ($action === 'verify') ? 'verified' : 'rejected';
-    $sql = "UPDATE employers SET verification_status = '$status' WHERE employer_id = $employer_id";
-    if ($conn->query($sql) === TRUE) {
-        header("Location: dashboard.php");
-        exit();
+    // Validate action
+    if ($action === 'verify' || $action === 'reject') {
+        // Update user status
+        $status = ($action === 'verify') ? 'verified' : 'rejected';
+        $sql = "UPDATE users SET status = '$status' WHERE user_id = $user_id";
+        if ($conn->query($sql) === TRUE) {
+            // Additional actions for rejection
+            if ($action === 'reject') {
+                // Example: Delete related records (optional)
+                // $conn->query("DELETE FROM job_seekers WHERE seeker_id = $user_id");
+                // $conn->query("DELETE FROM employers WHERE employer_id = $user_id");
+
+                // Example: Send a notification to the user (optional)
+                $message = "Your account has been rejected. Please contact support for more details.";
+                $conn->query("INSERT INTO notifications (user_id, message) VALUES ($user_id, '$message')");
+            }
+
+            // Redirect back to the dashboard
+            header("Location: dashboard.php");
+            exit();
+        } else {
+            echo "Error: " . $conn->error;
+        }
     } else {
-        echo "Error: " . $conn->error;
+        echo "Invalid action.";
     }
 } else {
     header("Location: dashboard.php");

@@ -12,35 +12,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Insert into users table
     $sql = "INSERT INTO users (full_name, email, password_hash, user_type) VALUES ('$full_name', '$email', '$password', '$user_type')";
-    if ($conn->query($sql) === TRUE) {
+    if ($conn->query($sql)) {
         $user_id = $conn->insert_id;
 
         // Insert into job_seekers table
         $sql = "INSERT INTO job_seekers (seeker_id, location) VALUES ($user_id, '$location')";
-        if ($conn->query($sql) === TRUE) {
+        if ($conn->query($sql)) {
             // Handle file uploads
             $document_types = ['valid_id', 'tin', 'resume', 'photo', 'qualification'];
             foreach ($document_types as $type) {
                 if (isset($_FILES[$type]) && $_FILES[$type]['error'] === UPLOAD_ERR_OK) {
                     $file_name = $_FILES[$type]['name'];
                     $file_tmp = $_FILES[$type]['tmp_name'];
-                    $file_path = "uploads/job_seekers/$user_id/$type/$file_name";
+                    $upload_dir = "uploads/job_seekers/$user_id/$type/";
 
                     // Create directory if it doesn't exist
-                    if (!is_dir(dirname($file_path))) {
-                        mkdir(dirname($file_path), 0777, true);
+                    if (!is_dir($upload_dir)) {
+                        mkdir($upload_dir, 0777, true); // Create directory recursively
                     }
+
+                    $file_path = $upload_dir . basename($file_name);
 
                     // Move uploaded file
                     if (move_uploaded_file($file_tmp, $file_path)) {
                         // Insert document into job_seeker_documents table
                         $sql = "INSERT INTO job_seeker_documents (seeker_id, document_type, document_path) VALUES ($user_id, '$type', '$file_path')";
-                        $conn->query($sql);
+                        if (!$conn->query($sql)) {
+                            $message = "Error uploading $type: " . $conn->error;
+                            break;
+                        }
+                    } else {
+                        $message = "Error moving uploaded file for $type.";
+                        break;
                     }
                 }
             }
 
-            $message = "Registration successful!";
+            if (empty($message)) {
+                $message = "Registration successful!";
+            }
         } else {
             // Rollback user insertion if job seeker insertion fails
             $conn->query("DELETE FROM users WHERE user_id = $user_id");
@@ -66,8 +76,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($message): ?>
             <div class="alert alert-info"><?php echo $message; ?></div>
         <?php endif; ?>
-                <form action="register.php" method="POST" enctype="multipart/form-data">
+        <form action="register.php" method="POST" enctype="multipart/form-data">
             <!-- Existing fields -->
+            <div class="mb-3">
+                <label for="full_name" class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" class="form-control" id="location" name="location" required>
+            </div>
             <div class="mb-3">
                 <label for="valid_id" class="form-label">Valid ID</label>
                 <input type="file" class="form-control" id="valid_id" name="valid_id" required>

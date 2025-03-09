@@ -11,13 +11,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_type = 'employer';
 
     // Insert into users table
-    $sql = "INSERT INTO users (full_name, email, password_hash, user_type) VALUES ('$full_name', '$email', '$password', '$user_type')";
-    if ($conn->query($sql) === TRUE) {
-        $user_id = $conn->insert_id;
+    $sql = "INSERT INTO users (full_name, email, password_hash, user_type) VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssss", $full_name, $email, $password, $user_type);
+
+    if ($stmt->execute()) {
+        $user_id = $stmt->insert_id;
 
         // Insert into employers table
-        $sql = "INSERT INTO employers (employer_id, company_name) VALUES ($user_id, '$company_name')";
-        if ($conn->query($sql) === TRUE) {
+        $sql = "INSERT INTO employers (employer_id, company_name) VALUES (?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("is", $user_id, $company_name);
+
+        if ($stmt->execute()) {
             // Handle file uploads
             $document_types = [
                 'business_permit', 
@@ -31,30 +37,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (isset($_FILES[$type]) && $_FILES[$type]['error'] === UPLOAD_ERR_OK) {
                     $file_name = $_FILES[$type]['name'];
                     $file_tmp = $_FILES[$type]['tmp_name'];
-                    $file_path = "uploads/employers/$user_id/$type/$file_name";
+                    $upload_dir = "uploads/employers/$user_id/$type/";
 
                     // Create directory if it doesn't exist
-                    if (!is_dir(dirname($file_path))) {
-                        mkdir(dirname($file_path), 0777, true);
+                    if (!is_dir($upload_dir)) {
+                        mkdir($upload_dir, 0777, true);
                     }
+
+                    $file_path = $upload_dir . basename($file_name);
 
                     // Move uploaded file
                     if (move_uploaded_file($file_tmp, $file_path)) {
                         // Insert document into employer_documents table
-                        $sql = "INSERT INTO employer_documents (employer_id, document_type, document_path) VALUES ($user_id, '$type', '$file_path')";
-                        $conn->query($sql);
+                        $sql = "INSERT INTO employer_documents (employer_id, document_type, document_path) VALUES (?, ?, ?)";
+                        $stmt = $conn->prepare($sql);
+                        $stmt->bind_param("iss", $user_id, $type, $file_path);
+                        $stmt->execute();
+                    } else {
+                        $message = "Error uploading $type.";
+                        break;
                     }
+                } else {
+                    $message = "Missing file for $type.";
+                    break;
                 }
             }
 
-            $message = "Registration successful! Your documents are under review.";
+            if (empty($message)) {
+                $message = "Registration successful! Your documents are under review.";
+            }
         } else {
             // Rollback user insertion if employer insertion fails
             $conn->query("DELETE FROM users WHERE user_id = $user_id");
-            $message = "Error: " . $sql . "<br>" . $conn->error;
+            $message = "Error: " . $stmt->error;
         }
     } else {
-        $message = "Error: " . $sql . "<br>" . $conn->error;
+        $message = "Error: " . $stmt->error;
     }
 }
 ?>
@@ -73,15 +91,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($message): ?>
             <div class="alert alert-info"><?php echo $message; ?></div>
         <?php endif; ?>
-                <form action="register.php" method="POST" enctype="multipart/form-data">
-            <!-- Existing fields -->
+        <form action="register.php" method="POST" enctype="multipart/form-data">
+            <!-- Personal Information -->
+            <div class="mb-3">
+                <label for="full_name" class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="company_name" class="form-label">Company Name</label>
+                <input type="text" class="form-control" id="company_name" name="company_name" required>
+            </div>
+
+            <!-- Document Uploads -->
             <div class="mb-3">
                 <label for="business_permit" class="form-label">Business Permit</label>
                 <input type="file" class="form-control" id="business_permit" name="business_permit" required>
-            </div>
-            <div class="mb-3">
-                <label for="barangay_clearance" class="form-label">Barangay Clearance</label>
-                <input type="file" class="form-control" id="barangay_clearance" name="barangay_clearance" required>
             </div>
             <div class="mb-3">
                 <label for="sec_dti_registration" class="form-label">SEC/DTI Registration</label>
@@ -99,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="official_documents" class="form-label">Official Documents (ID, Proof of Address)</label>
                 <input type="file" class="form-control" id="official_documents" name="official_documents" required>
             </div>
+
             <button type="submit" class="btn btn-primary">Register</button>
         </form>
         <p class="mt-3">Already have an account? <a href="login.php">Login here</a>.</p>

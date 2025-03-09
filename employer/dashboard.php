@@ -32,25 +32,46 @@ $user = $result->fetch_assoc();
         <h3>Your Job Postings</h3>
         <?php
         // Fetch job postings for this employer
-        $sql = "SELECT * FROM job_postings WHERE employer_id = $user_id";
+        $sql = "SELECT * FROM job_postings WHERE employer_id = $user_id ORDER BY created_at DESC";
         $result = $conn->query($sql);
 
         if ($result->num_rows > 0) {
-            echo "<ul>";
+            echo "<div class='accordion' id='jobPostingsAccordion'>";
             while ($row = $result->fetch_assoc()) {
-                echo "<li>{$row['title']} - Status: {$row['status']}</li>";
+                $job_id = $row['job_id'];
+                $status = $row['status'];
+                $status_badge = ($status === 'approved') ? 'success' : 
+                                (($status === 'pending') ? 'warning' : 
+                                (($status === 'rejected') ? 'danger' : 'secondary'));
+                echo "
+                <div class='accordion-item'>
+                    <h2 class='accordion-header' id='heading{$job_id}'>
+                        <button class='accordion-button' type='button' data-bs-toggle='collapse' data-bs-target='#collapse{$job_id}' aria-expanded='true' aria-controls='collapse{$job_id}'>
+                            {$row['title']} <span class='badge bg-{$status_badge} ms-2'>{$status}</span>
+                        </button>
+                    </h2>
+                    <div id='collapse{$job_id}' class='accordion-collapse collapse' aria-labelledby='heading{$job_id}' data-bs-parent='#jobPostingsAccordion'>
+                        <div class='accordion-body'>
+                            <p><strong>Description:</strong> {$row['description']}</p>
+                            <p><strong>Requirements:</strong> {$row['requirements']}</p>
+                            <p><strong>Posted On:</strong> {$row['created_at']}</p>
+                            <p><strong>Status:</strong> <span class='badge bg-{$status_badge}'>{$status}</span></p>
+                        </div>
+                    </div>
+                </div>";
             }
-            echo "</ul>";
+            echo "</div>";
         } else {
             echo "<p>You have not posted any jobs yet.</p>";
         }
         ?>
+
         <?php
         // Fetch the number of unread notifications
         $sql = "SELECT COUNT(*) AS unread_count FROM notifications WHERE user_id = $user_id AND status = 'unread'";
         $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
         ?>
-        <a href="notifications.php" class="btn btn-primary position-relative">
+        <a href="notifications.php" class="btn btn-primary position-relative mt-3">
             Notifications
             <?php if ($unread_count > 0): ?>
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -63,5 +84,8 @@ $user = $result->fetch_assoc();
         <a href="schedule_interview.php" class="btn btn-primary">Schedule Interviews</a> 
         <a href="logout.php" class="btn btn-danger">Logout</a>
     </div>
+
+    <!-- Bootstrap JS (required for accordion functionality) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = $_POST['description'];
     $requirements = $_POST['requirements'];
     $skills = $_POST['skills'];
-    $location = $_POST['location']; // New field
+    $location = $_POST['location'];
     $employer_id = $_SESSION['user_id'];
 
     // Insert job posting into the database
