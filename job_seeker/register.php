@@ -8,6 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
     $location = $_POST['location'];
+    $skills = $_POST['skills']; // Added skills field
     $user_type = 'job_seeker';
 
     // Insert into users table
@@ -16,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user_id = $conn->insert_id;
 
         // Insert into job_seekers table
-        $sql = "INSERT INTO job_seekers (seeker_id, location) VALUES ($user_id, '$location')";
+        $sql = "INSERT INTO job_seekers (seeker_id, location, skills) VALUES ($user_id, '$location', '$skills')";
         if ($conn->query($sql)) {
             // Handle file uploads
             $document_types = ['valid_id', 'tin', 'resume', 'photo', 'qualification'];
@@ -93,6 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label for="location" class="form-label">Location</label>
                 <input type="text" class="form-control" id="location" name="location" required>
+            </div>
+            <div class="mb-3">
+                <label for="skills" class="form-label">Your Skills</label>
+                <input type="text" class="form-control" id="skills" name="skills" required>
+                <small class="form-text text-muted">Separate skills with commas (e.g., PHP, MySQL, JavaScript).</small>
             </div>
             <div class="mb-3">
                 <label for="valid_id" class="form-label">Valid ID</label>
