@@ -21,10 +21,27 @@ $sql = "SELECT * FROM job_postings WHERE job_id = $job_id";
 $result = $conn->query($sql);
 $job = $result->fetch_assoc();
 
+// Fetch job seeker details
+$sql = "SELECT * FROM job_seekers WHERE seeker_id = $seeker_id";
+$result = $conn->query($sql);
+$seeker = $result->fetch_assoc();
+
 // Check if the job seeker has already applied for this job
 $sql = "SELECT * FROM applications WHERE job_id = $job_id AND seeker_id = $seeker_id";
 $application_result = $conn->query($sql);
 $has_applied = $application_result->num_rows > 0;
+
+// Check if the job seeker's skills or location match the job requirements
+$skills_match = false;
+$location_match = false;
+
+if ($seeker) {
+    $seeker_skills = explode(',', $seeker['skills']);
+    $job_skills = explode(',', $job['skills']);
+    $skills_match = !empty(array_intersect($seeker_skills, $job_skills));
+
+    $location_match = $seeker['location'] === $job['location'];
+}
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$has_applied) {
@@ -77,6 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$has_applied) {
         <p><strong>Description:</strong> <?php echo $job['description']; ?></p>
         <p><strong>Requirements:</strong> <?php echo $job['requirements']; ?></p>
         <p><strong>Skills:</strong> <?php echo $job['skills']; ?></p>
+        <p><strong>Location:</strong> <?php echo $job['location']; ?></p>
 
         <?php if ($message): ?>
             <div class="alert alert-info"><?php echo $message; ?></div>
@@ -85,15 +103,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$has_applied) {
         <?php if ($has_applied): ?>
             <div class="alert alert-success">You have already applied for this job.</div>
         <?php else: ?>
-            <form action="view_job.php?id=<?php echo $job_id; ?>" method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="documents" class="form-label">Upload Required Documents</label>
-                    <input type="file" class="form-control" id="documents" name="documents[]" multiple required>
-                    <small class="form-text text-muted">Upload documents (e.g., certifications, IDs) as required by the job.</small>
-                </div>
-                <div id="documentTypes"></div>
-                <button type="submit" class="btn btn-primary">Apply Now</button>
-            </form>
+            <?php if ($skills_match || $location_match): ?>
+                <form action="view_job.php?id=<?php echo $job_id; ?>" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="documents" class="form-label">Upload Required Documents</label>
+                        <input type="file" class="form-control" id="documents" name="documents[]" multiple required>
+                        <small class="form-text text-muted">Upload documents (e.g., certifications, IDs) as required by the job.</small>
+                    </div>
+                    <div id="documentTypes"></div>
+                    <button type="submit" class="btn btn-primary">Apply Now</button>
+                </form>
+            <?php else: ?>
+                <div class="alert alert-warning">Your skills or location do not match the job requirements. You can still apply, but your application may be rejected.</div>
+                <form action="view_job.php?id=<?php echo $job_id; ?>" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="documents" class="form-label">Upload Required Documents</label>
+                        <input type="file" class="form-control" id="documents" name="documents[]" multiple required>
+                        <small class="form-text text-muted">Upload documents (e.g., certifications, IDs) as required by the job.</small>
+                    </div>
+                    <div id="documentTypes"></div>
+                    <button type="submit" class="btn btn-primary">Apply Now</button>
+                </form>
+            <?php endif; ?>
         <?php endif; ?>
 
         <a href="search_jobs.php" class="btn btn-secondary mt-3">Back to Job Listings</a>

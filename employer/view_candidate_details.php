@@ -66,6 +66,11 @@ $job_title = $job['title'];
                 <label for="offer_details" class="form-label">Offer Details</label>
                 <textarea class="form-control" id="offer_details" name="offer_details" rows="3" required></textarea>
             </div>
+            <div class="mb-3">
+                <label for="salary" class="form-label">Salary</label>
+                <input type="number" class="form-control" id="salary" name="salary" step="0.01" min="0" required>
+                <small class="form-text text-muted">Enter the salary amount (e.g., 50000.00).</small>
+            </div>
             <button type="submit" class="btn btn-primary">Send Offer</button>
         </form>
     </div>

@@ -13,12 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $job_id = $_POST['job_id'];
     $employer_id = $_SESSION['user_id'];
     $offer_details = $_POST['offer_details'];
+    $salary = $_POST['salary'];
 
     // Fetch the application_id for the given seeker_id and job_id
     $sql = "SELECT application_id FROM applications WHERE seeker_id = ? AND job_id = ?";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        header("Location: view_candidate.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Database error: " . $conn->error));
+        header("Location: view_candidate_details.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Database error: " . $conn->error));
         exit();
     }
 
@@ -29,22 +30,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$application) {
         // No application found for the given seeker_id and job_id
-        header("Location: view_candidate.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("No application found for the candidate and job."));
+        header("Location: view_candidate_details.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("No application found for the candidate and job."));
         exit();
     }
 
     $application_id = $application['application_id'];
 
     // Insert the job offer into the database
-    $sql = "INSERT INTO job_offers (application_id, employer_id, seeker_id, job_id, offer_details, created_at) 
-            VALUES (?, ?, ?, ?, ?, NOW())";
+    $sql = "INSERT INTO job_offers (application_id, employer_id, seeker_id, job_id, offer_details, salary, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        header("Location: view_candidate.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Database error: " . $conn->error));
+        header("Location: view_candidate_details.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Database error: " . $conn->error));
         exit();
     }
 
-    $stmt->bind_param("iiiis", $application_id, $employer_id, $seeker_id, $job_id, $offer_details);
+    $stmt->bind_param("iiiisd", $application_id, $employer_id, $seeker_id, $job_id, $offer_details, $salary);
 
     if ($stmt->execute()) {
         $offer_id = $stmt->insert_id; // Get the auto-generated offer ID
@@ -54,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
         $stmt2 = $conn->prepare($sql);
         if (!$stmt2) {
-            header("Location: view_candidate.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Database error: " . $conn->error));
+            header("Location: view_candidate_details.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Database error: " . $conn->error));
             exit();
         }
 
@@ -62,10 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt2->execute();
 
         // Redirect with success message
-        header("Location: view_candidate.php?seeker_id=$seeker_id&job_id=$job_id&status=success&message=" . urlencode("Job offer sent successfully!"));
+        header("Location: view_candidate_details.php?seeker_id=$seeker_id&job_id=$job_id&status=success&message=" . urlencode("Job offer sent successfully!"));
     } else {
         // Redirect with error message
-        header("Location: view_candidate.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Error sending job offer: " . $stmt->error));
+        header("Location: view_candidate_details.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Error sending job offer: " . $stmt->error));
     }
 
     $stmt->close();
