@@ -2,21 +2,19 @@
 session_start();
 include '../db.php';
 
-// Redirect if not logged in
-if (!isset($_SESSION['user_id'])) {
+// Redirect if not logged in as an employer
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'employer') {
     header("Location: login.php");
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Fetch notifications for the logged-in user
-$sql = "SELECT * FROM notifications WHERE user_id = $user_id ORDER BY created_at DESC";
-$result = $conn->query($sql);
-
-// Mark all notifications as read
-$sql = "UPDATE notifications SET status = 'read' WHERE user_id = $user_id AND status = 'unread'";
-$conn->query($sql);
+// Fetch all notifications for the logged-in employer
+$employer_id = $_SESSION['user_id'];
+$sql = "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $employer_id);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -30,22 +28,24 @@ $conn->query($sql);
 <body>
     <div class="container mt-5">
         <h2>Notifications</h2>
-        <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $badge = ($row['status'] === 'unread') ? "<span class='badge bg-danger'>New</span>" : "";
-                echo "<div class='card mb-3'>";
-                echo "<div class='card-body'>";
-                echo "<p class='card-text'>{$row['message']} $badge</p>";
-                echo "<small class='text-muted'>{$row['created_at']}</small>";
-                echo "</div>";
-                echo "</div>";
-            }
-        } else {
-            echo "<p>No notifications found.</p>";
-        }
-        ?>
-        <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+        <?php if ($result->num_rows > 0): ?>
+            <ul class="list-group">
+                <?php while ($notification = $result->fetch_assoc()): ?>
+                    <li class="list-group-item">
+                        <p><?php echo $notification['message']; ?></p>
+                        <small class="text-muted"><?php echo $notification['created_at']; ?></small>
+                        <?php if ($notification['message'] === "A candidate has been recommended for your job posting. Please review and decide whether to send a job offer."): ?>
+                            <!-- Add a link to view candidate details -->
+                            <a href="view_candidate_details.php?notification_id=<?php echo $notification['notification_id']; ?>" class="btn btn-primary btn-sm mt-2">
+                                View Candidate Details
+                            </a>
+                        <?php endif; ?>
+                    </li>
+                <?php endwhile; ?>
+            </ul>
+        <?php else: ?>
+            <p>No notifications found.</p>
+        <?php endif; ?>
     </div>
 </body>
 </html>

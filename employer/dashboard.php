@@ -56,6 +56,39 @@ $user = $result->fetch_assoc();
                             <p><strong>Requirements:</strong> {$row['requirements']}</p>
                             <p><strong>Posted On:</strong> {$row['created_at']}</p>
                             <p><strong>Status:</strong> <span class='badge bg-{$status_badge}'>{$status}</span></p>
+
+                            <h4>Candidates</h4>";
+                            // Fetch candidates for this job posting
+                            $sql_candidates = "SELECT applications.application_id, applications.seeker_id, users.full_name, users.email 
+                                              FROM applications 
+                                              JOIN users ON applications.seeker_id = users.user_id 
+                                              WHERE applications.job_id = $job_id";
+                            $candidates_result = $conn->query($sql_candidates);
+
+                            if ($candidates_result->num_rows > 0) {
+                                echo "<table class='table table-bordered'>
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>";
+                                while ($candidate = $candidates_result->fetch_assoc()) {
+                                    echo "<tr>
+                                            <td>{$candidate['full_name']}</td>
+                                            <td>{$candidate['email']}</td>
+                                            <td>
+                                                <a href='view_candidate_details.php?seeker_id={$candidate['seeker_id']}&job_id={$job_id}' class='btn btn-primary btn-sm'>View Details</a>
+                                            </td>
+                                          </tr>";
+                                }
+                                echo "</tbody></table>";
+                            } else {
+                                echo "<p>No candidates have applied for this job yet.</p>";
+                            }
+                            echo "
                         </div>
                     </div>
                 </div>";

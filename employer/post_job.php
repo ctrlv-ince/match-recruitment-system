@@ -16,15 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $requirements = $_POST['requirements'];
     $skills = $_POST['skills'];
     $location = $_POST['location'];
+    $quota = $_POST['quota']; // New field for job quota
     $employer_id = $_SESSION['user_id'];
 
     // Insert job posting into the database
-    $sql = "INSERT INTO job_postings (employer_id, title, description, requirements, skills, location, status) 
-            VALUES ($employer_id, '$title', '$description', '$requirements', '$skills', '$location', 'pending')";
-    if ($conn->query($sql) === TRUE) {
-        $message = "Job posted successfully! Waiting for admin approval.";
+    $sql = "INSERT INTO job_postings (employer_id, title, description, requirements, skills, location, quota, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        $message = "Error preparing statement: " . $conn->error;
     } else {
-        $message = "Error: " . $conn->error;
+        $stmt->bind_param("isssssi", $employer_id, $title, $description, $requirements, $skills, $location, $quota);
+        if ($stmt->execute()) {
+            $message = "Job posted successfully! Waiting for admin approval.";
+        } else {
+            $message = "Error: " . $stmt->error;
+        }
+        $stmt->close();
     }
 }
 ?>
@@ -64,6 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="skills" class="form-label">Required Skills</label>
                 <input type="text" class="form-control" id="skills" name="skills" required>
                 <small class="form-text text-muted">Separate skills with commas (e.g., PHP, MySQL, JavaScript).</small>
+            </div>
+            <div class="mb-3">
+                <label for="quota" class="form-label">Number of Slots (Quota)</label>
+                <input type="number" class="form-control" id="quota" name="quota" min="1" required>
             </div>
             <button type="submit" class="btn btn-primary">Post Job</button>
             <a href="dashboard.php" class="btn btn-secondary">Cancel</a>

@@ -328,6 +328,7 @@ $users_result = $conn->query($sql);
                     <th>Name</th>
                     <th>Email</th>
                     <th>Status</th>
+                    <th>Documents</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -341,10 +342,31 @@ $users_result = $conn->query($sql);
 
                 if ($job_seekers_result->num_rows > 0) {
                     while ($row = $job_seekers_result->fetch_assoc()) {
+                        $user_id = $row['user_id'];
+
+                        // Fetch documents for the job seeker
+                        $sql_docs = "SELECT * FROM job_seeker_documents WHERE seeker_id = $user_id";
+                        $docs_result = $conn->query($sql_docs);
+
                         echo "<tr>";
                         echo "<td>{$row['full_name']}</td>";
                         echo "<td>{$row['email']}</td>";
                         echo "<td>{$row['status']}</td>";
+
+                        // Display documents
+                        echo "<td>";
+                        if ($docs_result->num_rows > 0) {
+                            while ($doc = $docs_result->fetch_assoc()) {
+                                $doc_path = $doc['document_path'];
+                                $doc_type = $doc['document_type'];
+                                echo "<p><strong>$doc_type:</strong> <a href='$doc_path' target='_blank'>View Document</a></p>";
+                            }
+                        } else {
+                            echo "No documents uploaded.";
+                        }
+                        echo "</td>";
+
+                        // Actions (Verify/Reject)
                         echo "<td>
                         <a href='verify_user.php?id={$row['user_id']}&action=verify' class='btn btn-success btn-sm'>Verify</a>
                         <a href='verify_user.php?id={$row['user_id']}&action=reject' class='btn btn-danger btn-sm'>Reject</a>
@@ -352,7 +374,7 @@ $users_result = $conn->query($sql);
                         echo "</tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='4'>No pending job seeker verifications.</td></tr>";
+                    echo "<tr><td colspan='5'>No pending job seeker verifications.</td></tr>";
                 }
                 ?>
             </tbody>

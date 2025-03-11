@@ -43,11 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $employer_id = $row['employer_id'];
 
-            // Notify the employer
+            // Notify the employer and include the interview_id in the notification
             $message = "A candidate has been recommended for your job posting. Please review and decide whether to send a job offer.";
-            $sql = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+            $sql = "INSERT INTO notifications (user_id, message, interview_id) VALUES (?, ?, ?)";
             $stmt4 = $conn->prepare($sql);
-            $stmt4->bind_param("is", $employer_id, $message);
+            $stmt4->bind_param("isi", $employer_id, $message, $interview_id);
             $stmt4->execute();
         }
 

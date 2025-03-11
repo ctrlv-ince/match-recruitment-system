@@ -8,34 +8,37 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'employer') {
     exit();
 }
 
-$notification_id = $_GET['notification_id'];
+$seeker_id = $_GET['seeker_id'];
+$job_id = $_GET['job_id'];
 
-// Fetch the notification details
-$sql = "SELECT * FROM notifications WHERE notification_id = ?";
+// Fetch candidate details
+$sql = "SELECT users.full_name, users.email, job_seekers.skills, job_seekers.resume_image 
+        FROM users 
+        JOIN job_seekers ON users.user_id = job_seekers.seeker_id 
+        WHERE users.user_id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $notification_id);
+$stmt->bind_param("i", $seeker_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$notification = $result->fetch_assoc();
+$candidate = $result->fetch_assoc();
 
-// Fetch the candidate and job details
-$sql = "SELECT applications.seeker_id, applications.job_id, job_postings.title 
-        FROM applications 
-        JOIN job_postings ON applications.job_id = job_postings.job_id 
-        WHERE applications.application_id = (
-            SELECT application_id FROM interviews WHERE interview_id = (
-                SELECT interview_id FROM notifications WHERE notification_id = ?
-            )
-        )";
-$stmt2 = $conn->prepare($sql);
-$stmt2->bind_param("i", $notification_id);
-$stmt2->execute();
-$result = $stmt2->get_result();
-$details = $result->fetch_assoc();
+if (!$candidate) {
+    die("No candidate found for ID: $seeker_id");
+}
 
-$seeker_id = $details['seeker_id'];
-$job_id = $details['job_id'];
-$job_title = $details['title'];
+// Fetch job title
+$sql = "SELECT title FROM job_postings WHERE job_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $job_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$job = $result->fetch_assoc();
+
+if (!$job) {
+    die("No job found for ID: $job_id");
+}
+
+$job_title = $job['title'];
 ?>
 
 <!DOCTYPE html>
@@ -50,10 +53,13 @@ $job_title = $details['title'];
     <div class="container mt-5">
         <h2>Candidate Details</h2>
         <p><strong>Job Title:</strong> <?php echo $job_title; ?></p>
-        <p><strong>Candidate ID:</strong> <?php echo $seeker_id; ?></p>
+        <p><strong>Name:</strong> <?php echo $candidate['full_name']; ?></p>
+        <p><strong>Email:</strong> <?php echo $candidate['email']; ?></p>
+        <p><strong>Skills:</strong> <?php echo $candidate['skills']; ?></p>
+        <p><strong>Resume:</strong> <a href="<?php echo $candidate['resume_image']; ?>" target="_blank">View Resume</a></p>
 
         <h3>Send Job Offer</h3>
-        <form id="offerForm">
+        <form action="send_offer.php" method="POST">
             <input type="hidden" name="seeker_id" value="<?php echo $seeker_id; ?>">
             <input type="hidden" name="job_id" value="<?php echo $job_id; ?>">
             <div class="mb-3">
@@ -62,28 +68,6 @@ $job_title = $details['title'];
             </div>
             <button type="submit" class="btn btn-primary">Send Offer</button>
         </form>
-        <div id="responseMessage" class="mt-3"></div>
     </div>
-
-    <script>
-        document.getElementById('offerForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-
-            fetch('send_offer.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('responseMessage').innerHTML = `
-                    <div class="alert alert-${data.status}">${data.message}</div>
-                `;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        });
-    </script>
 </body>
 </html>
