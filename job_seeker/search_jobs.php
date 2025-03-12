@@ -14,7 +14,6 @@ if (isset($_GET['search'])) {
     $search = $_GET['search'];
 }
 
-// Fetch job seeker's skills
 // Fetch job seeker's skills and location
 $sql = "SELECT skills, location FROM job_seekers WHERE seeker_id = $user_id";
 $result = $conn->query($sql);
@@ -33,7 +32,7 @@ $sql = "SELECT *,
             ELSE 0 
         END AS location_match 
         FROM job_postings 
-        WHERE status = 'approved' AND (title LIKE '%$search%' OR skills LIKE '%$search%') 
+        WHERE status = 'approved' AND quota > 0 AND (title LIKE '%$search%' OR skills LIKE '%$search%') 
         ORDER BY location_match DESC, skill_match DESC, title ASC";
 $result = $conn->query($sql);
 ?>

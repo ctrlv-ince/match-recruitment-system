@@ -78,81 +78,23 @@ $users_result = $conn->query($sql);
                         $application_id = $candidate['application_id'];
                         echo "<li>{$candidate['full_name']} - Application Status: " . ($candidate['status'] ?? 'pending') . "</li>";
 
-                        // Fetch interview details for this candidate
-                        $sql_interview = "SELECT * FROM interviews WHERE application_id = $application_id";
-                        $interview_result = $conn->query($sql_interview);
-
-                        if ($interview_result->num_rows > 0) {
-                            $interview = $interview_result->fetch_assoc();
-                            echo "<ul>";
-                            echo "<li>Interview Scheduled: {$interview['scheduled_date']}</li>";
-                            echo "<li>Interview Status: {$interview['status']}</li>";
-
-                            // Show "Mark as Done" button if the interview is not yet done
-                            if ($interview['status'] !== 'done') {
-                                echo "<li>
-                                        <form action='update_interview.php' method='POST' style='display:inline;'>
-                                            <input type='hidden' name='interview_id' value='{$interview['interview_id']}'>
-                                            <input type='hidden' name='status' value='done'>
-                                            <input type='hidden' name='notes' value='{$interview['notes']}'>
-                                            <input type='hidden' name='recommendation' value='{$interview['recommendation']}'>
-                                            <button type='submit' class='btn btn-warning btn-sm'>Mark as Done</button>
-                                        </form>
-                                      </li>";
-                            } else {
-                                // Show "Update Interview Details" button if the interview is done
-                                echo "<li>
-                                        <button type='button' class='btn btn-info btn-sm' data-bs-toggle='modal' data-bs-target='#updateInterviewModal{$interview['interview_id']}'>Update Interview Details</button>
-                                      </li>";
-
-                                // Modal for updating interview details
-                                echo "
-                                <div class='modal fade' id='updateInterviewModal{$interview['interview_id']}' tabindex='-1' aria-labelledby='updateInterviewModalLabel{$interview['interview_id']}' aria-hidden='true'>
-                                    <div class='modal-dialog'>
-                                        <div class='modal-content'>
-                                            <div class='modal-header'>
-                                                <h5 class='modal-title' id='updateInterviewModalLabel{$interview['interview_id']}'>Update Interview Details</h5>
-                                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                                            </div>
-                                            <div class='modal-body'>
-                                                <form action='update_interview.php' method='POST'>
-                                                    <input type='hidden' name='interview_id' value='{$interview['interview_id']}'>
-                                                    <div class='mb-3'>
-                                                        <label for='notes' class='form-label'>Notes</label>
-                                                        <textarea class='form-control' id='notes' name='notes' rows='3'>{$interview['notes']}</textarea>
-                                                    </div>
-                                                    <div class='mb-3'>
-                                                        <label for='recommendation' class='form-label'>Recommendation</label>
-                                                        <select class='form-control' id='recommendation' name='recommendation' required>
-                                                            <option value='recommended' " . ($interview['recommendation'] === 'recommended' ? 'selected' : '') . ">Recommended</option>
-                                                            <option value='not recommended' " . ($interview['recommendation'] === 'not recommended' ? 'selected' : '') . ">Not Recommended</option>
-                                                        </select>
-                                                    </div>
-                                                    <button type='submit' class='btn btn-primary'>Update</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>";
-                            }
-
+                        // Only show "Shortlist" and "Reject" buttons for candidates with status 'applied'
+                        if ($candidate['status'] === 'applied') {
                             // Hide buttons if the hiring process is completed
                             if ($candidate['employer_decision'] === 'approved' || $candidate['employer_decision'] === 'rejected') {
                                 echo "<li><p class='text-muted'>Hiring process completed.</p></li>";
+                            } else {
+                                echo "<li>
+                                        <form action='shortlist_candidate.php' method='POST' style='display:inline;'>
+                                            <input type='hidden' name='application_id' value='{$application_id}'>
+                                            <button type='submit' class='btn btn-success btn-sm'>Shortlist</button>
+                                        </form>
+                                        <form action='reject_candidate.php' method='POST' style='display:inline;'>
+                                            <input type='hidden' name='application_id' value='{$application_id}'>
+                                            <button type='submit' class='btn btn-danger btn-sm'>Reject</button>
+                                        </form>
+                                      </li>";
                             }
-                            echo "</ul>";
-                        } else {
-                            // Add "Shortlist" and "Reject" buttons for candidates without an interview
-                            echo "<li>
-                                    <form action='shortlist_candidate.php' method='POST' style='display:inline;'>
-                                        <input type='hidden' name='application_id' value='{$application_id}'>
-                                        <button type='submit' class='btn btn-success btn-sm'>Shortlist</button>
-                                    </form>
-                                    <form action='reject_candidate.php' method='POST' style='display:inline;'>
-                                        <input type='hidden' name='application_id' value='{$application_id}'>
-                                        <button type='submit' class='btn btn-danger btn-sm'>Reject</button>
-                                    </form>
-                                  </li>";
                         }
                     }
                     echo "</ul>";
@@ -161,12 +103,7 @@ $users_result = $conn->query($sql);
                 }
                 echo "</td>";
 
-                // Actions column
-                echo "<td>";
-                // Add any additional actions here
-                echo "</td>";
-
-                echo "</tr>";
+                
             }
         } else {
             echo "<tr><td colspan='5'>No active job listings found.</td></tr>";
@@ -175,8 +112,71 @@ $users_result = $conn->query($sql);
     </tbody>
 </table>
 
-        <!-- Bootstrap JS (required for modal functionality) -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+        <!-- Shortlisted Candidates Section -->
+<h3>Shortlisted Candidates</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Candidate Name</th>
+            <th>Job Title</th>
+            <th>Employer</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        // Fetch shortlisted candidates
+        $sql = "SELECT applications.application_id, users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
+                FROM applications 
+                JOIN users ON applications.seeker_id = users.user_id 
+                JOIN job_postings ON applications.job_id = job_postings.job_id 
+                JOIN employers ON job_postings.employer_id = employers.employer_id 
+                WHERE applications.status = 'shortlisted' 
+                ORDER BY applications.applied_at DESC";
+        $shortlisted_result = $conn->query($sql);
+
+        if ($shortlisted_result->num_rows > 0) {
+            while ($row = $shortlisted_result->fetch_assoc()) {
+                echo "<tr>";
+                echo "<td>{$row['candidate_name']}</td>";
+                echo "<td>{$row['job_title']}</td>";
+                echo "<td>{$row['company_name']}</td>";
+                echo "<td>
+                        <button type='button' class='btn btn-primary btn-sm' data-bs-toggle='modal' data-bs-target='#scheduleInterviewModal{$row['application_id']}'>Schedule Interview</button>
+                      </td>";
+                echo "</tr>";
+
+                // Modal for scheduling an interview
+                echo "
+                <div class='modal fade' id='scheduleInterviewModal{$row['application_id']}' tabindex='-1' aria-labelledby='scheduleInterviewModalLabel{$row['application_id']}' aria-hidden='true'>
+                    <div class='modal-dialog'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='scheduleInterviewModalLabel{$row['application_id']}'>Schedule Interview</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <form action='schedule_interview.php' method='POST'>
+                                    <input type='hidden' name='application_id' value='{$row['application_id']}'>
+                                    <div class='mb-3'>
+                                        <label for='scheduled_date' class='form-label'>Interview Date & Time</label>
+                                        <input type='datetime-local' class='form-control' id='scheduled_date' name='scheduled_date' required>
+                                    </div>
+                                    <button type='submit' class='btn btn-primary'>Schedule</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>";
+            }
+        } else {
+            echo "<tr><td colspan='4'>No shortlisted candidates found.</td></tr>";
+        }
+        ?>
+    </tbody>
+</table>
 
         <!-- Job Postings Section -->
         <h3>Pending Job Postings</h3>
@@ -495,6 +495,9 @@ $users_result = $conn->query($sql);
 
         <a href="logout.php" class="btn btn-danger">Logout</a>
     </div>
+
+            <!-- Bootstrap JS (required for modal functionality) -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
