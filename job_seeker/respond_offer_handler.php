@@ -56,11 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // If quota is met, mark the job as unavailable
             if ($new_quota <= 0) {
-                $sql = "UPDATE job_postings SET status = 'closed' WHERE job_id = ?";
+                $sql = "UPDATE job_postings SET status = 'unavailable' WHERE job_id = ?";
                 $stmt4 = $conn->prepare($sql);
                 $stmt4->bind_param("i", $job_id);
                 $stmt4->execute();
             }
+
+            // Redirect to the feedback page
+            header("Location: feedback.php");
+            exit();
         }
 
         // Notify the employer

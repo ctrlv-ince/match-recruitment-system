@@ -9,35 +9,39 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$user_type = $_SESSION['user_type'];
 $message = '';
 
+// Fetch the user's role from the users table
+$sql = "SELECT user_type FROM users WHERE user_id = $user_id";
+$result = $conn->query($sql);
+$user = $result->fetch_assoc();
+$user_type = $user['user_type']; // Get the user's role (job_seeker or employer)
+
+// Check if the user has a hired application
+$sql = "SELECT * FROM applications 
+        WHERE (seeker_id = $user_id OR employer_id = $user_id) 
+        AND status = 'hired'";
+$result = $conn->query($sql);
+
+if ($result->num_rows === 0) {
+    // Redirect if no hired application is found
+    header("Location: dashboard.php");
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $job_id = $_POST['job_id'];
     $rating = $_POST['rating'];
     $comments = $_POST['comments'];
 
     // Insert feedback into the database
-    $sql = "INSERT INTO feedback (user_id, job_id, rating, comments) VALUES ($user_id, $job_id, $rating, '$comments')";
+    $sql = "INSERT INTO feedback (user_id, rating, comments) 
+            VALUES ($user_id, $rating, '$comments')";
     if ($conn->query($sql) === TRUE) {
         $message = "Thank you for your feedback!";
     } else {
         $message = "Error submitting feedback: " . $conn->error;
     }
 }
-
-// Fetch jobs for the feedback form
-if ($user_type === 'job_seeker') {
-    $sql = "SELECT job_postings.job_id, job_postings.title 
-            FROM applications 
-            JOIN job_postings ON applications.job_id = job_postings.job_id 
-            WHERE applications.seeker_id = $user_id AND applications.status = 'hired'";
-} else if ($user_type === 'employer') {
-    $sql = "SELECT job_postings.job_id, job_postings.title 
-            FROM job_postings 
-            WHERE job_postings.employer_id = $user_id";
-}
-$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
@@ -55,20 +59,6 @@ $result = $conn->query($sql);
             <div class="alert alert-info"><?php echo $message; ?></div>
         <?php endif; ?>
         <form action="feedback.php" method="POST">
-            <div class="mb-3">
-                <label for="job_id" class="form-label">Select Job</label>
-                <select class="form-select" id="job_id" name="job_id" required>
-                    <?php
-                    if ($result->num_rows > 0) {
-                        while ($row = $result->fetch_assoc()) {
-                            echo "<option value='{$row['job_id']}'>{$row['title']}</option>";
-                        }
-                    } else {
-                        echo "<option disabled>No jobs found.</option>";
-                    }
-                    ?>
-                </select>
-            </div>
             <div class="mb-3">
                 <label for="rating" class="form-label">Rating</label>
                 <select class="form-select" id="rating" name="rating" required>
