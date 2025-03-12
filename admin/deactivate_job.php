@@ -26,15 +26,6 @@ if (isset($_GET['id'])) {
         $stmt->bind_param("i", $job_id);
         $stmt->execute();
 
-        // Log the action in admin_actions
-        $action_type = 'deactivate_job';
-        $description = "Admin $admin_id deactivated job posting $job_id.";
-        
-        $sql = "INSERT INTO admin_actions (admin_id, affected_job_id, action_type, description) VALUES (?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiss", $admin_id, $job_id, $action_type, $description);
-        $stmt->execute();
-
         header("Location: dashboard.php");
         exit();
     } else {

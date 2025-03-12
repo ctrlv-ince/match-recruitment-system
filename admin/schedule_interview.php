@@ -37,12 +37,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt2->bind_param("is", $application_id, $scheduled_date);
 
             if ($stmt2->execute()) {
+                // Update the application status to 'interview_scheduled'
+                $sql = "UPDATE applications SET status = 'interview_scheduled' WHERE application_id = ?";
+                $stmt3 = $conn->prepare($sql);
+                $stmt3->bind_param("i", $application_id);
+                $stmt3->execute();
+
                 // Notify the job seeker about the interview schedule
                 $message = "Your interview has been scheduled on $scheduled_date at $location.";
                 $sql = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
-                $stmt3 = $conn->prepare($sql);
-                $stmt3->bind_param("is", $seeker_id, $message);
-                $stmt3->execute();
+                $stmt4 = $conn->prepare($sql);
+                $stmt4->bind_param("is", $seeker_id, $message);
+                $stmt4->execute();
 
                 $_SESSION['message'] = "Interview scheduled successfully!";
             } else {

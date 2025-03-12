@@ -40,23 +40,6 @@ if (!$job) {
 
 $job_title = $job['title'];
 
-// Check if the candidate has been interviewed and recommended
-$sql = "SELECT interviews.interview_id, interviews.recommendation 
-        FROM interviews 
-        JOIN applications ON interviews.application_id = applications.application_id 
-        WHERE applications.seeker_id = ? AND applications.job_id = ? 
-        AND interviews.status = 'completed' 
-        AND interviews.recommendation = 'recommended'";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ii", $seeker_id, $job_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$interview = $result->fetch_assoc();
-
-if (!$interview) {
-    die("This candidate has not been interviewed and recommended by the admin.");
-}
-
 // Fetch uploaded documents for this candidate's application
 $sql = "SELECT application_documents.document_type, application_documents.document_path 
         FROM application_documents 
@@ -98,22 +81,6 @@ $documents = $result->fetch_all(MYSQLI_ASSOC);
         <?php else: ?>
             <p>No documents uploaded for this application.</p>
         <?php endif; ?>
-
-        <h3>Send Job Offer</h3>
-        <form action="send_offer.php" method="POST">
-            <input type="hidden" name="seeker_id" value="<?php echo $seeker_id; ?>">
-            <input type="hidden" name="job_id" value="<?php echo $job_id; ?>">
-            <div class="mb-3">
-                <label for="offer_details" class="form-label">Offer Details</label>
-                <textarea class="form-control" id="offer_details" name="offer_details" rows="3" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="salary" class="form-label">Salary</label>
-                <input type="number" class="form-control" id="salary" name="salary" step="0.01" min="0" required>
-                <small class="form-text text-muted">Enter the salary amount (e.g., 50000.00).</small>
-            </div>
-            <button type="submit" class="btn btn-primary">Send Offer</button>
-        </form>
 
         <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
     </div>

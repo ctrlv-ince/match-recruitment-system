@@ -20,14 +20,6 @@ if (isset($_GET['id'])) {
     $job = $stmt->get_result()->fetch_assoc();
 
     if ($job && $job['status'] === 'rejected') {
-        // Log the action in admin_actions
-        $action_type = 'delete_job';
-        $description = "Admin $admin_id deleted rejected job posting $job_id.";
-        
-        $sql = "INSERT INTO admin_actions (admin_id, affected_job_id, action_type, description) VALUES (?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiss", $admin_id, $job_id, $action_type, $description);
-        $stmt->execute();
 
         // Delete the job posting
         $sql = "DELETE FROM job_postings WHERE job_id = ?";

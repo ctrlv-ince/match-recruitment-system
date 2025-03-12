@@ -20,14 +20,6 @@ if (isset($_GET['id'])) {
     $user = $stmt->get_result()->fetch_assoc();
 
     if ($user && $user['status'] === 'rejected') {
-        // Log the action in admin_actions before deleting the user
-        $action_type = 'delete_user';
-        $description = "Admin $admin_id deleted rejected user $user_id.";
-        
-        $sql = "INSERT INTO admin_actions (admin_id, affected_user_id, action_type, description) VALUES (?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiss", $admin_id, $user_id, $action_type, $description);
-        $stmt->execute();
 
         // Delete related records based on user type
         if ($user['user_type'] === 'employer') {

@@ -42,12 +42,16 @@ $user = $result->fetch_assoc();
             while ($row = $result->fetch_assoc()) {
                 $job_id = $row['job_id'];
                 $status = $row['status'];
+                $quota = $row['quota'];
+                $quota_badge = ($quota <= 0) ? 'danger' : 'success';
                 $status_badge = ($status === 'approved') ? 'success' : (($status === 'pending') ? 'warning' : (($status === 'rejected') ? 'danger' : 'secondary'));
                 echo "
                 <div class='accordion-item'>
                     <h2 class='accordion-header' id='heading{$job_id}'>
                         <button class='accordion-button' type='button' data-bs-toggle='collapse' data-bs-target='#collapse{$job_id}' aria-expanded='true' aria-controls='collapse{$job_id}'>
-                            {$row['title']} <span class='badge bg-{$status_badge} ms-2'>{$status}</span>
+                            {$row['title']} 
+                            <span class='badge bg-{$status_badge} ms-2'>{$status}</span>
+                            <span class='badge bg-{$quota_badge} ms-2'>Quota: {$quota}</span>
                         </button>
                     </h2>
                     <div id='collapse{$job_id}' class='accordion-collapse collapse' aria-labelledby='heading{$job_id}' data-bs-parent='#jobPostingsAccordion'>
@@ -56,38 +60,80 @@ $user = $result->fetch_assoc();
                             <p><strong>Requirements:</strong> {$row['requirements']}</p>
                             <p><strong>Posted On:</strong> {$row['created_at']}</p>
                             <p><strong>Status:</strong> <span class='badge bg-{$status_badge}'>{$status}</span></p>
+                            <p><strong>Quota:</strong> <span class='badge bg-{$quota_badge}'>{$quota}</span></p>";
 
-                            <h4>Candidates</h4>";
-                // Fetch candidates for this job posting
+                // Show a message if the quota is met
+                if ($quota <= 0) {
+                    echo "<p class='text-danger'><strong>This job is no longer accepting applications.</strong></p>";
+                }
+
+                echo "<h4>Shortlisted Candidates</h4>";
+                // Fetch shortlisted candidates for this job posting
                 $sql_candidates = "SELECT applications.application_id, applications.seeker_id, users.full_name, users.email 
-                                              FROM applications 
-                                              JOIN users ON applications.seeker_id = users.user_id 
-                                              WHERE applications.job_id = $job_id";
+                                    FROM applications 
+                                    JOIN users ON applications.seeker_id = users.user_id 
+                                    WHERE applications.job_id = $job_id AND applications.status = 'shortlisted'";
                 $candidates_result = $conn->query($sql_candidates);
 
                 if ($candidates_result->num_rows > 0) {
                     echo "<table class='table table-bordered'>
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Email</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>";
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>";
                     while ($candidate = $candidates_result->fetch_assoc()) {
                         echo "<tr>
-                                            <td>{$candidate['full_name']}</td>
-                                            <td>{$candidate['email']}</td>
-                                            <td>
-                                                <a href='view_candidate_details.php?seeker_id={$candidate['seeker_id']}&job_id={$job_id}' class='btn btn-primary btn-sm'>View Details</a>
-                                            </td>
-                                          </tr>";
+                                    <td>{$candidate['full_name']}</td>
+                                    <td>{$candidate['email']}</td>
+                                    <td>
+                                        <a href='view_shortlisted_candidate.php?seeker_id={$candidate['seeker_id']}&job_id={$job_id}' class='btn btn-primary btn-sm'>View Details</a>
+                                    </td>
+                                  </tr>";
                     }
                     echo "</tbody></table>";
                 } else {
-                    echo "<p>No candidates have applied for this job yet.</p>";
+                    echo "<p>No shortlisted candidates for this job yet.</p>";
                 }
+
+                echo "<h4>Interviewed and Recommended Candidates</h4>";
+                // Fetch interviewed and recommended candidates for this job posting
+                $sql_interviewed = "SELECT applications.application_id, applications.seeker_id, users.full_name, users.email 
+                                    FROM applications 
+                                    JOIN users ON applications.seeker_id = users.user_id 
+                                    JOIN interviews ON applications.application_id = interviews.application_id 
+                                    WHERE applications.job_id = $job_id 
+                                    AND interviews.status = 'completed' 
+                                    AND interviews.recommendation = 'recommended'";
+                $interviewed_result = $conn->query($sql_interviewed);
+
+                if ($interviewed_result->num_rows > 0) {
+                    echo "<table class='table table-bordered'>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>";
+                    while ($candidate = $interviewed_result->fetch_assoc()) {
+                        echo "<tr>
+                                    <td>{$candidate['full_name']}</td>
+                                    <td>{$candidate['email']}</td>
+                                    <td>
+                                        <a href='view_candidate_details.php?seeker_id={$candidate['seeker_id']}&job_id={$job_id}' class='btn btn-primary btn-sm'>View Details</a>
+                                    </td>
+                                  </tr>";
+                    }
+                    echo "</tbody></table>";
+                } else {
+                    echo "<p>No interviewed and recommended candidates for this job yet.</p>";
+                }
+
                 echo "
                         </div>
                     </div>
@@ -105,11 +151,11 @@ $user = $result->fetch_assoc();
         <?php
         // Fetch job offers for this employer
         $sql_offers = "SELECT job_offers.*, job_postings.title, users.full_name 
-               FROM job_offers 
-               JOIN job_postings ON job_offers.job_id = job_postings.job_id 
-               JOIN users ON job_offers.seeker_id = users.user_id 
-               WHERE job_offers.employer_id = $user_id 
-               ORDER BY job_offers.created_at DESC";
+                       FROM job_offers 
+                       JOIN job_postings ON job_offers.job_id = job_postings.job_id 
+                       JOIN users ON job_offers.seeker_id = users.user_id 
+                       WHERE job_offers.employer_id = $user_id 
+                       ORDER BY job_offers.created_at DESC";
         $offers_result = $conn->query($sql_offers);
 
         if ($offers_result->num_rows > 0) {
@@ -119,18 +165,18 @@ $user = $result->fetch_assoc();
                 $status = $offer['status'];
                 $status_badge = ($status === 'pending') ? 'warning' : (($status === 'accepted') ? 'success' : (($status === 'declined') ? 'danger' : (($status === 'expired') ? 'secondary' : 'primary')));
                 echo "
-        <div class='accordion-item'>
-            <h2 class='accordion-header' id='offerHeading{$offer_id}'>
-                <button class='accordion-button' type='button' data-bs-toggle='collapse' data-bs-target='#offerCollapse{$offer_id}' aria-expanded='true' aria-controls='offerCollapse{$offer_id}'>
-                    Offer for {$offer['title']} <span class='badge bg-{$status_badge} ms-2'>{$status}</span>
-                </button>
-            </h2>
-            <div id='offerCollapse{$offer_id}' class='accordion-collapse collapse' aria-labelledby='offerHeading{$offer_id}' data-bs-parent='#jobOffersAccordion'>
-                <div class='accordion-body'>
-                    <p><strong>Candidate:</strong> {$offer['full_name']}</p>
-                    <p><strong>Offer Details:</strong> {$offer['offer_details']}</p>
-                    <p><strong>Created At:</strong> {$offer['created_at']}</p>
-                    <p><strong>Status:</strong> <span class='badge bg-{$status_badge}'>{$status}</span></p>";
+                <div class='accordion-item'>
+                    <h2 class='accordion-header' id='offerHeading{$offer_id}'>
+                        <button class='accordion-button' type='button' data-bs-toggle='collapse' data-bs-target='#offerCollapse{$offer_id}' aria-expanded='true' aria-controls='offerCollapse{$offer_id}'>
+                            Offer for {$offer['title']} <span class='badge bg-{$status_badge} ms-2'>{$status}</span>
+                        </button>
+                    </h2>
+                    <div id='offerCollapse{$offer_id}' class='accordion-collapse collapse' aria-labelledby='offerHeading{$offer_id}' data-bs-parent='#jobOffersAccordion'>
+                        <div class='accordion-body'>
+                            <p><strong>Candidate:</strong> {$offer['full_name']}</p>
+                            <p><strong>Offer Details:</strong> {$offer['offer_details']}</p>
+                            <p><strong>Created At:</strong> {$offer['created_at']}</p>
+                            <p><strong>Status:</strong> <span class='badge bg-{$status_badge}'>{$status}</span></p>";
 
                 // Show actions based on offer status
                 if ($status === 'pending') {
