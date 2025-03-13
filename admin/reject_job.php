@@ -18,10 +18,10 @@ if (isset($_GET['id'])) {
     $stmt->bind_param("i", $job_id);
     $stmt->execute();
 
-    header("Location: dashboard.php");
+    header("Location: pending_jobs.php");
     exit();
 } else {
-    header("Location: dashboard.php");
+    header("Location: pending_jobs.php");
     exit();
 }
 ?>

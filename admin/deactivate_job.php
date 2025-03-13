@@ -21,7 +21,7 @@ if (isset($_GET['id'])) {
 
     if ($job && $job['status'] === 'approved') {
         // Update job status to inactive
-        $sql = "UPDATE job_postings SET status = 'inactive' WHERE job_id = ?";
+        $sql = "UPDATE job_postings SET status = 'unavailable' WHERE job_id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $job_id);
         $stmt->execute();

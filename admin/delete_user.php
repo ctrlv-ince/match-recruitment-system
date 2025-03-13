@@ -37,13 +37,13 @@ if (isset($_GET['id'])) {
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
 
-        header("Location: dashboard.php");
+        header("Location: users.php");
         exit();
     } else {
         echo "Error: User not found or not rejected.";
     }
 } else {
-    header("Location: dashboard.php");
+    header("Location: users.php");
     exit();
 }
 ?>

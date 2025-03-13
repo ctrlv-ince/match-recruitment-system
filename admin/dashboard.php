@@ -8,16 +8,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
-// Fetch all job postings
-$sql = "SELECT job_postings.*, users.full_name 
-        FROM job_postings 
-        JOIN users ON job_postings.employer_id = users.user_id 
-        ORDER BY job_postings.created_at DESC";
-$job_postings_result = $conn->query($sql);
+// Fetch key metrics
+$total_jobs = $conn->query("SELECT COUNT(*) as total FROM job_postings")->fetch_assoc()['total'];
+$active_candidates = $conn->query("SELECT COUNT(*) as total FROM applications WHERE status = 'applied'")->fetch_assoc()['total'];
+$pending_approvals = $conn->query("SELECT COUNT(*) as total FROM job_postings WHERE status = 'pending'")->fetch_assoc()['total'];
 
-// Fetch all users
-$sql = "SELECT * FROM users ORDER BY created_at DESC";
-$users_result = $conn->query($sql);
+// Fetch recent activity
+$recent_activity = $conn->query("SELECT job_postings.title, users.full_name, job_postings.created_at 
+                                 FROM job_postings 
+                                 JOIN users ON job_postings.employer_id = users.user_id 
+                                 ORDER BY job_postings.created_at DESC 
+                                 LIMIT 5");
 ?>
 
 <!DOCTYPE html>
@@ -28,560 +29,202 @@ $users_result = $conn->query($sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/styles.css" rel="stylesheet">
 </head>
 
 <body>
-    <div class="container mt-5">
-        <h2>Admin Dashboard</h2>
+    <!-- Header -->
+    <?php include 'includes/header.php'; ?>
 
-        <!-- Active Job Listings Section -->
-        <h3>Active Job Listings</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Employer</th>
-                    <th>Quota</th>
-                    <th>Candidates</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch active job postings
-                $sql = "SELECT job_postings.*, users.full_name 
-                FROM job_postings 
-                JOIN users ON job_postings.employer_id = users.user_id 
-                WHERE job_postings.status = 'approved' 
-                ORDER BY job_postings.created_at DESC";
-                $active_jobs_result = $conn->query($sql);
+    <style>
+        /* Dashboard styles */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f3f6f8;
+        }
 
-                if ($active_jobs_result->num_rows > 0) {
-                    while ($row = $active_jobs_result->fetch_assoc()) {
-                        $job_id = $row['job_id'];
-                        echo "<tr>";
-                        echo "<td>{$row['title']}</td>";
-                        echo "<td>{$row['full_name']}</td>";
-                        echo "<td>{$row['quota']}</td>";
+        .navbar {
+            padding: 10px 0;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-                        // Fetch candidates for this job
-                        $sql_candidates = "SELECT applications.*, users.full_name 
-                                   FROM applications 
-                                   JOIN users ON applications.seeker_id = users.user_id 
-                                   WHERE applications.job_id = $job_id";
-                        $candidates_result = $conn->query($sql_candidates);
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
 
-                        echo "<td>";
-                        if ($candidates_result->num_rows > 0) {
-                            echo "<ul>";
-                            while ($candidate = $candidates_result->fetch_assoc()) {
-                                $application_id = $candidate['application_id'];
-                                echo "<li>{$candidate['full_name']} - Application Status: " . ($candidate['status'] ?? 'pending') . "</li>";
+        .card:hover {
+            transform: translateY(-5px);
+        }
 
-                                // Only show "Shortlist" and "Reject" buttons for candidates with status 'applied'
-                                if ($candidate['status'] === 'applied') {
-                                    // Hide buttons if the hiring process is completed
-                                    if ($candidate['employer_decision'] === 'approved' || $candidate['employer_decision'] === 'rejected') {
-                                        echo "<li><p class='text-muted'>Hiring process completed.</p></li>";
-                                    } else {
-                                        echo "<li>
-                                        <form action='shortlist_candidate.php' method='POST' style='display:inline;'>
-                                            <input type='hidden' name='application_id' value='{$application_id}'>
-                                            <button type='submit' class='btn btn-success btn-sm'>Shortlist</button>
-                                        </form>
-                                        <form action='reject_candidate.php' method='POST' style='display:inline;'>
-                                            <input type='hidden' name='application_id' value='{$application_id}'>
-                                            <button type='submit' class='btn btn-danger btn-sm'>Reject</button>
-                                        </form>
-                                      </li>";
-                                    }
+        .btn-primary {
+            background-color: #0a66c2;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #004182;
+        }
+
+        .display-4 {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+    </style>
+
+    <!-- Main Content -->
+    <main class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Dashboard Overview</h2>
+                <div class="row">
+                    <!-- Key Metrics Cards -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Jobs</h5>
+                                <p class="card-text display-4"><?php echo $total_jobs; ?></p>
+                                <a href="active_jobs.php" class="btn btn-primary">View Jobs</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Active Candidates</h5>
+                                <p class="card-text display-4"><?php echo $active_candidates; ?></p>
+                                <a href="shortlisted.php" class="btn btn-primary">View Candidates</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Pending Approvals</h5>
+                                <p class="card-text display-4"><?php echo $pending_approvals; ?></p>
+                                <a href="pending_jobs.php" class="btn btn-primary">Review</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <h3 class="mt-4">Quick Links</h3>
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <a href="active_jobs.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Jobs</h5>
+                                <p class="card-text">Manage active job postings.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="shortlisted.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Candidates</h5>
+                                <p class="card-text">View shortlisted candidates.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="for_interview.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Interviews</h5>
+                                <p class="card-text">Manage scheduled interviews.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="users.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Users</h5>
+                                <p class="card-text">Manage user accounts.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="job_seeker_verifications.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Job Seeker Verifications</h5>
+                                <p class="card-text">Manage Job Seeker Verifications.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="employer_verifications.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Employer Verifications</h5>
+                                <p class="card-text">Manage Employer Verifications.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="feedbacks.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Feedbacks</h5>
+                                <p class="card-text">Manage feedbacks from users.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="pending_jobs.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Pending Jobs</h5>
+                                <p class="card-text">Manage Pending Jobs.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <a href="rejected_jobs.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Rejected Jobs</h5>
+                                <p class="card-text">Manage Rejected Jobs.</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <h3 class="mt-4">Recent Activity</h3>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Job Title</th>
+                                <th>Employer</th>
+                                <th>Date Posted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            if ($recent_activity->num_rows > 0) {
+                                while ($row = $recent_activity->fetch_assoc()) {
+                                    echo '
+                                    <tr>
+                                        <td>' . $row['title'] . '</td>
+                                        <td>' . $row['full_name'] . '</td>
+                                        <td>' . $row['created_at'] . '</td>
+                                    </tr>';
                                 }
+                            } else {
+                                echo '<tr><td colspan="3">No recent activity found.</td></tr>';
                             }
-                            echo "</ul>";
-                        } else {
-                            echo "No candidates yet.";
-                        }
-                        echo "</td>";
-                    }
-                } else {
-                    echo "<tr><td colspan='5'>No active job listings found.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
 
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
 
-
-        <!-- Shortlisted Candidates Section -->
-        <h3>Shortlisted Candidates</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Candidate Name</th>
-                    <th>Job Title</th>
-                    <th>Employer</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch shortlisted candidates who are not yet scheduled for an interview
-                $sql = "SELECT applications.application_id, users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
-                FROM applications 
-                JOIN users ON applications.seeker_id = users.user_id 
-                JOIN job_postings ON applications.job_id = job_postings.job_id 
-                JOIN employers ON job_postings.employer_id = employers.employer_id 
-                WHERE applications.status = 'shortlisted' 
-                AND applications.application_id NOT IN (SELECT application_id FROM interviews)
-                ORDER BY applications.applied_at DESC";
-                $shortlisted_result = $conn->query($sql);
-
-                if ($shortlisted_result->num_rows > 0) {
-                    while ($row = $shortlisted_result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>{$row['candidate_name']}</td>";
-                        echo "<td>{$row['job_title']}</td>";
-                        echo "<td>{$row['company_name']}</td>";
-                        echo "<td>
-                        <button type='button' class='btn btn-primary btn-sm' data-bs-toggle='modal' data-bs-target='#scheduleInterviewModal{$row['application_id']}'>Schedule Interview</button>
-                      </td>";
-                        echo "</tr>";
-
-                        // Modal for scheduling an interview
-                        echo "
-                <div class='modal fade' id='scheduleInterviewModal{$row['application_id']}' tabindex='-1' aria-labelledby='scheduleInterviewModalLabel{$row['application_id']}' aria-hidden='true'>
-                    <div class='modal-dialog'>
-                        <div class='modal-content'>
-                            <div class='modal-header'>
-                                <h5 class='modal-title' id='scheduleInterviewModalLabel{$row['application_id']}'>Schedule Interview</h5>
-                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                            </div>
-                            <div class='modal-body'>
-                                <form action='schedule_interview.php' method='POST'>
-                                    <input type='hidden' name='application_id' value='{$row['application_id']}'>
-                                    <div class='mb-3'>
-                                        <label for='scheduled_date' class='form-label'>Interview Date & Time</label>
-                                        <input type='datetime-local' class='form-control' id='scheduled_date' name='scheduled_date' required>
-                                    </div>
-                                    <button type='submit' class='btn btn-primary'>Schedule</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>";
-                    }
-                } else {
-                    echo "<tr><td colspan='4'>No shortlisted candidates found.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Scheduled Interviews Section -->
-        <h3>Scheduled Interviews</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Candidate Name</th>
-                    <th>Job Title</th>
-                    <th>Employer</th>
-                    <th>Scheduled Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch candidates with scheduled interviews
-                $sql = "SELECT interviews.interview_id, interviews.scheduled_date, interviews.status, 
-                       users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
-                FROM interviews 
-                JOIN applications ON interviews.application_id = applications.application_id 
-                JOIN users ON applications.seeker_id = users.user_id 
-                JOIN job_postings ON applications.job_id = job_postings.job_id 
-                JOIN employers ON job_postings.employer_id = employers.employer_id 
-                ORDER BY interviews.scheduled_date DESC";
-                $interviews_result = $conn->query($sql);
-
-                if ($interviews_result->num_rows > 0) {
-                    while ($row = $interviews_result->fetch_assoc()) {
-                        $interview_id = $row['interview_id'];
-                        $status_badge = ($row['status'] === 'pending') ? 'warning' : (($row['status'] === 'completed') ? 'success' : (($row['status'] === 'cancelled') ? 'danger' : 'secondary'));
-                        echo "<tr>";
-                        echo "<td>{$row['candidate_name']}</td>";
-                        echo "<td>{$row['job_title']}</td>";
-                        echo "<td>{$row['company_name']}</td>";
-                        echo "<td>{$row['scheduled_date']}</td>";
-                        echo "<td><span class='badge bg-{$status_badge}'>{$row['status']}</span></td>";
-                        echo "<td>
-                        <button type='button' class='btn btn-info btn-sm' data-bs-toggle='modal' data-bs-target='#updateInterviewModal{$interview_id}'>Update Interview</button>
-                      </td>";
-                        echo "</tr>";
-
-                        // Modal for updating the interview
-                        echo "
-                <div class='modal fade' id='updateInterviewModal{$interview_id}' tabindex='-1' aria-labelledby='updateInterviewModalLabel{$interview_id}' aria-hidden='true'>
-                    <div class='modal-dialog'>
-                        <div class='modal-content'>
-                            <div class='modal-header'>
-                                <h5 class='modal-title' id='updateInterviewModalLabel{$interview_id}'>Update Interview</h5>
-                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                            </div>
-                            <div class='modal-body'>
-                                <form action='update_interview.php' method='POST'>
-                                    <input type='hidden' name='interview_id' value='{$interview_id}'>
-                                    <div class='mb-3'>
-                                        <label for='status' class='form-label'>Status</label>
-                                        <select class='form-control' id='status' name='status' required>
-                                            <option value='pending' " . ($row['status'] === 'pending' ? 'selected' : '') . ">Pending</option>
-                                            <option value='completed' " . ($row['status'] === 'completed' ? 'selected' : '') . ">Completed</option>
-                                            <option value='cancelled' " . ($row['status'] === 'cancelled' ? 'selected' : '') . ">Cancelled</option>
-                                        </select>
-                                    </div>
-                                    <div class='mb-3'>
-                                        <label for='notes' class='form-label'>Notes</label>
-                                        <textarea class='form-control' id='notes' name='notes' rows='3'>{$row['notes']}</textarea>
-                                    </div>
-                                    <div class='mb-3'>
-                                        <label for='recommendation' class='form-label'>Recommendation</label>
-                                        <select class='form-control' id='recommendation' name='recommendation' required>
-                                            <option value='recommended' " . ($row['recommendation'] === 'recommended' ? 'selected' : '') . ">Recommended</option>
-                                            <option value='not recommended' " . ($row['recommendation'] === 'not recommended' ? 'selected' : '') . ">Not Recommended</option>
-                                        </select>
-                                    </div>
-                                    <button type='submit' class='btn btn-primary'>Update</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>";
-                    }
-                } else {
-                    echo "<tr><td colspan='6'>No scheduled interviews found.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Job Postings Section -->
-        <h3>Pending Job Postings</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Employer</th>
-                    <th>Description</th>
-                    <th>Requirements</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch all pending job postings
-                $sql = "SELECT job_postings.*, users.full_name 
-                FROM job_postings 
-                JOIN users ON job_postings.employer_id = users.user_id 
-                WHERE job_postings.status = 'pending' 
-                ORDER BY job_postings.created_at DESC";
-                $job_postings_result = $conn->query($sql);
-
-                if ($job_postings_result->num_rows > 0) {
-                    while ($row = $job_postings_result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>{$row['title']}</td>";
-                        echo "<td>{$row['full_name']}</td>";
-                        echo "<td>{$row['description']}</td>";
-                        echo "<td>{$row['requirements']}</td>";
-                        echo "<td>{$row['status']}</td>";
-                        echo "<td>
-                        <a href='approve_job.php?id={$row['job_id']}' class='btn btn-success btn-sm'>Approve</a>
-                        <a href='reject_job.php?id={$row['job_id']}' class='btn btn-danger btn-sm'>Reject</a>
-                      </td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='6'>No pending job postings found.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Rejected Job Postings Section -->
-        <h3>Rejected Job Postings</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Employer</th>
-                    <th>Description</th>
-                    <th>Requirements</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch all rejected job postings
-                $sql = "SELECT job_postings.*, users.full_name 
-                FROM job_postings 
-                JOIN users ON job_postings.employer_id = users.user_id 
-                WHERE job_postings.status = 'rejected' 
-                ORDER BY job_postings.created_at DESC";
-                $rejected_job_postings_result = $conn->query($sql);
-
-                if ($rejected_job_postings_result->num_rows > 0) {
-                    while ($row = $rejected_job_postings_result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>{$row['title']}</td>";
-                        echo "<td>{$row['full_name']}</td>";
-                        echo "<td>{$row['description']}</td>";
-                        echo "<td>{$row['requirements']}</td>";
-                        echo "<td>{$row['status']}</td>";
-                        echo "<td>
-                        <a href='delete_job.php?id={$row['job_id']}' class='btn btn-danger btn-sm' onclick='return confirm(\"Are you sure you want to delete this job posting?\")'>Delete</a>
-                      </td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='6'>No rejected job postings found.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Users Section -->
-        <h3>Users</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>User Type</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch all users
-                $sql = "SELECT * FROM users ORDER BY created_at DESC";
-                $users_result = $conn->query($sql);
-
-                if ($users_result->num_rows > 0) {
-                    while ($row = $users_result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>{$row['full_name']}</td>";
-                        echo "<td>{$row['email']}</td>";
-                        echo "<td>{$row['user_type']}</td>";
-                        echo "<td>{$row['status']}</td>";
-                        echo "<td>";
-                        if ($row['status'] === 'rejected') {
-                            echo "<a href='delete_user.php?id={$row['user_id']}' class='btn btn-danger btn-sm' onclick='return confirm(\"Are you sure you want to delete this user?\")'>Delete</a>";
-                        }
-                        echo "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='5'>No users found.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Job Seeker Verifications Section -->
-        <h3>Job Seeker Verifications</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Documents</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch pending job seekers
-                $sql = "SELECT users.user_id, users.full_name, users.email, users.status 
-                FROM users 
-                WHERE users.user_type = 'job_seeker' AND users.status = 'pending'";
-                $job_seekers_result = $conn->query($sql);
-
-                if ($job_seekers_result->num_rows > 0) {
-                    while ($row = $job_seekers_result->fetch_assoc()) {
-                        $user_id = $row['user_id'];
-
-                        // Fetch documents for the job seeker
-                        $sql_docs = "SELECT * FROM job_seeker_documents WHERE seeker_id = $user_id";
-                        $docs_result = $conn->query($sql_docs);
-
-                        echo "<tr>";
-                        echo "<td>{$row['full_name']}</td>";
-                        echo "<td>{$row['email']}</td>";
-                        echo "<td>{$row['status']}</td>";
-
-                        // Display documents
-                        echo "<td>";
-                        if ($docs_result->num_rows > 0) {
-                            while ($doc = $docs_result->fetch_assoc()) {
-                                $doc_path = $doc['document_path'];
-                                $doc_type = $doc['document_type'];
-                                echo "<p><strong>$doc_type:</strong> <a href='../job_seeker/$doc_path' target='_blank'>View Document</a></p>";
-                            }
-                        } else {
-                            echo "No documents uploaded.";
-                        }
-                        echo "</td>";
-
-                        // Actions (Verify/Reject)
-                        echo "<td>
-                        <a href='verify_user.php?id={$row['user_id']}&action=verify' class='btn btn-success btn-sm'>Verify</a>
-                        <a href='verify_user.php?id={$row['user_id']}&action=reject' class='btn btn-danger btn-sm'>Reject</a>
-                      </td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='5'>No pending job seeker verifications.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Employer Verifications Section -->
-        <h3>Employer Verifications</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Company</th>
-                    <th>Documents</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch pending employers and their documents
-                $sql = "SELECT users.user_id, users.full_name, employers.company_name, 
-                       employer_documents.document_type, employer_documents.document_path
-                FROM users
-                JOIN employers ON users.user_id = employers.employer_id
-                LEFT JOIN employer_documents ON employers.employer_id = employer_documents.employer_id
-                WHERE users.user_type = 'employer' AND users.status = 'pending'";
-                $employers_result = $conn->query($sql);
-
-                if ($employers_result->num_rows > 0) {
-                    $current_employer = null;
-                    while ($row = $employers_result->fetch_assoc()) {
-                        if ($current_employer !== $row['user_id']) {
-                            if ($current_employer !== null) {
-                                echo "</ul></td>";
-                                echo "<td>
-                                <a href='verify_user.php?id={$current_employer}&action=verify' class='btn btn-success btn-sm'>Verify</a>
-                                <a href='verify_user.php?id={$current_employer}&action=reject' class='btn btn-danger btn-sm'>Reject</a>
-                              </td>";
-                                echo "</tr>";
-                            }
-                            echo "<tr>";
-                            echo "<td>{$row['full_name']}</td>";
-                            echo "<td>{$row['company_name']}</td>";
-                            echo "<td><ul>";
-                            $current_employer = $row['user_id'];
-                        }
-                        echo "<li>{$row['document_type']}: <a href='../employer/{$row['document_path']}' target='_blank'>View Document</a></li>";
-                    }
-                    if ($current_employer !== null) {
-                        echo "</ul></td>";
-                        echo "<td>
-                        <a href='verify_user.php?id={$current_employer}&action=verify' class='btn btn-success btn-sm'>Verify</a>
-                        <a href='verify_user.php?id={$current_employer}&action=reject' class='btn btn-danger btn-sm'>Reject</a>
-                      </td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='4'>No pending employer verifications.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Feedback Section -->
-        <h3>Feedback</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Rating</th>
-                    <th>Comments</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Fetch all feedback
-                $sql = "SELECT feedback.*, users.full_name 
-                FROM feedback 
-                JOIN users ON feedback.user_id = users.user_id 
-                ORDER BY feedback.created_at DESC";
-                $feedback_result = $conn->query($sql);
-
-                if ($feedback_result->num_rows > 0) {
-                    while ($row = $feedback_result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>{$row['full_name']}</td>";
-                        echo "<td>{$row['rating']}/5</td>";
-                        echo "<td>{$row['comments']}</td>";
-                        echo "<td>{$row['created_at']}</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='4'>No feedback found.</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
-        <!-- Reports Section -->
-        <!-- <h3>Reports</h3>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>User</th>
-            <th>Issue Type</th>
-            <th>Description</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody> -->
-        <?php
-        // Fetch all reports
-        // $sql = "SELECT reports.*, users.full_name 
-        //         FROM reports 
-        //         JOIN users ON reports.user_id = users.user_id 
-        //         ORDER BY reports.created_at DESC";
-        // $reports_result = $conn->query($sql);
-
-        // if ($reports_result->num_rows > 0) {
-        //     while ($row = $reports_result->fetch_assoc()) {
-        //         echo "<tr>";
-        //         echo "<td>{$row['full_name']}</td>";
-        //         echo "<td>{$row['issue_type']}</td>";
-        //         echo "<td>{$row['description']}</td>";
-        //         echo "<td>{$row['created_at']}</td>";
-        //         echo "</tr>";
-        //     }
-        // } else {
-        //     echo "<tr><td colspan='4'>No reports found.</td></tr>";
-        // }
-        ?>
-        <!-- </tbody>
-</table> -->
-
-        <a href="logout.php" class="btn btn-danger">Logout</a>
-    </div>
-
-    <!-- Bootstrap JS (required for modal functionality) -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

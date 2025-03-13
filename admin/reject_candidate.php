@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->close();
 
     // Redirect back to the dashboard
-    header("Location: dashboard.php");
+    header("Location: active_jobs.php");
     exit();
 }
 ?>

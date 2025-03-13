@@ -30,7 +30,7 @@ if (isset($_GET['id']) && isset($_GET['action'])) {
             }
 
             // Redirect back to the dashboard
-            header("Location: dashboard.php");
+            header("Location: job_seeker_verifications.php");
             exit();
         } else {
             echo "Error: " . $conn->error;
@@ -39,7 +39,7 @@ if (isset($_GET['id']) && isset($_GET['action'])) {
         echo "Invalid action.";
     }
 } else {
-    header("Location: dashboard.php");
+    header("Location: job_seeker_verifications.php");
     exit();
 }
 ?>

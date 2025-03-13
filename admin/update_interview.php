@@ -65,10 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->close();
 
     // Redirect back to the dashboard
-    header("Location: dashboard.php");
+    header("Location: for_interview.php");
     exit();
 } else {
-    header("Location: dashboard.php");
+    header("Location: for_interview.php");
     exit();
 }
 ?>

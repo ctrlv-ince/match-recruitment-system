@@ -27,13 +27,13 @@ if (isset($_GET['id'])) {
         $stmt->bind_param("i", $job_id);
         $stmt->execute();
 
-        header("Location: dashboard.php");
+        header("Location: rejected_jobs.php");
         exit();
     } else {
         echo "Error: Job posting not found or not rejected.";
     }
 } else {
-    header("Location: dashboard.php");
+    header("Location: rejected_jobs.php");
     exit();
 }
 ?>  

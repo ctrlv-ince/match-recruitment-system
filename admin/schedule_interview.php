@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->close();
 
     // Redirect back to the admin dashboard
-    header("Location: dashboard.php");
+    header("Location: shortlisted.php");
     exit();
 }
 ?>
