@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="mb-3">
-                        <label for="location" class="form-label">Job Location</label>
+                        <label for="location" class="form-label">Branch Location</label>
                         <input type="text" class="form-control" id="location" name="location" placeholder="E.g., Manila, Philippines" required>
                     </div>
                     

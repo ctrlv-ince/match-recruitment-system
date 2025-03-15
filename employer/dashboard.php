@@ -563,6 +563,10 @@ $user = $result->fetch_assoc();
                                                     <strong><i class='fas fa-file-contract me-2'></i>Offer Details:</strong> 
                                                     {$offer['offer_details']}
                                                 </p>
+                                                <p class='mb-1'>
+                                                    <strong><i class='fa-solid fa-dollar-sign me-2'></i>Salary: </strong> 
+                                                    ₱{$offer['salary']}
+                                                </p>
                                                 <p class='mb-0'>
                                                     <strong><i class='fas fa-calendar-alt me-2'></i>Created At:</strong> 
                                                     " . date('F j, Y', strtotime($offer['created_at'])) . "
