@@ -16,20 +16,27 @@ $stmt->bind_param("i", $employer_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Count unread notifications
-$unread_sql = "SELECT COUNT(*) as unread_count FROM notifications WHERE user_id = ? AND is_read = 0";
-$unread_stmt = $conn->prepare($unread_sql);
-$unread_stmt->bind_param("i", $employer_id);
-$unread_stmt->execute();
-$unread_result = $unread_stmt->get_result();
-$unread_count = $unread_result->fetch_assoc()['unread_count'];
+// Handle marking notifications as read or unread
+if (isset($_GET['mark_as_read'])) {
+    $notification_id = intval($_GET['mark_as_read']);
+    $sql_update = "UPDATE notifications SET status = 'read' WHERE notification_id = ? AND user_id = ?";
+    $stmt_update = $conn->prepare($sql_update);
+    $stmt_update->bind_param("ii", $notification_id, $employer_id);
+    $stmt_update->execute();
 
-// Mark all as read
-if (isset($_POST['mark_all_read'])) {
-    $update_sql = "UPDATE notifications SET is_read = 1 WHERE user_id = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("i", $employer_id);
-    $update_stmt->execute();
+    // Refresh the page to reflect the changes
+    header("Location: notifications.php");
+    exit();
+}
+
+if (isset($_GET['mark_as_unread'])) {
+    $notification_id = intval($_GET['mark_as_unread']);
+    $sql_update = "UPDATE notifications SET status = 'unread' WHERE notification_id = ? AND user_id = ?";
+    $stmt_update = $conn->prepare($sql_update);
+    $stmt_update->bind_param("ii", $notification_id, $employer_id);
+    $stmt_update->execute();
+
+    // Refresh the page to reflect the changes
     header("Location: notifications.php");
     exit();
 }
@@ -73,138 +80,86 @@ if (isset($_POST['mark_all_read'])) {
             color: #333;
         }
         
-        .notification-card {
+        .page-header {
             background-color: white;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            overflow: hidden;
         }
         
-        .notification-header {
+        .card {
+            border: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
             background-color: var(--primary-color);
             color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .notification-item {
-            border-left: 3px solid transparent;
-            transition: all 0.2s ease;
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .notification-item:hover {
-            background-color: var(--accent-color);
-        }
-        
-        .notification-item.unread {
-            border-left: 3px solid var(--secondary-color);
-            background-color: rgba(10, 102, 194, 0.05);
-        }
-        
-        .notification-item .time {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-        
-        .notification-item .title {
             font-weight: 600;
-            margin-bottom: 5px;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0 !important;
         }
         
-        .notification-item .message {
-            color: #333;
-            margin-bottom: 10px;
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
         
-        .action-btn {
-            background-color: var(--secondary-color);
+        .btn-primary:hover {
+            background-color: #005d91;
+            border-color: #005d91;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
             color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
         }
-        
-        .action-btn:hover {
-            background-color: #084b8a;
-            color: white;
-        }
-        
-        .sidebar {
+
+        .notification-item {
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 20px;
-            position: sticky;
-            top: 20px;
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .sidebar-menu li {
-            margin-bottom: 10px;
-        }
-        
-        .sidebar-menu a {
-            color: #333;
-            text-decoration: none;
-            display: block;
-            padding: 10px;
-            border-radius: 4px;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-left: 3px solid var(--primary-color);
             transition: all 0.2s ease;
         }
         
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background-color: var(--accent-color);
-            color: var(--primary-color);
+        .notification-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
-        .sidebar-menu a i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
+        .notification-item.unread {
+            border-left: 3px solid #ffc107;
+            background-color: rgba(255, 248, 230, 0.3);
         }
-        
-        .badge-notification {
-            background-color: #ff4d4f;
-            color: white;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 10px;
-        }
-        
-        .mark-all-read {
-            font-size: 0.9rem;
-            color: white;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        
-        .mark-all-read:hover {
-            text-decoration: underline;
-            color: white;
-        }
-        
-        .no-notifications {
-            text-align: center;
-            padding: 40px 20px;
+
+        .notification-time {
             color: var(--text-muted);
+            font-size: 0.85rem;
         }
-        
-        .no-notifications i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: #ccc;
+
+        .notification-actions {
+            margin-top: 10px;
+        }
+
+        .notification-message {
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .notification-detail {
+            color: var(--text-muted);
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -219,22 +174,15 @@ if (isset($_POST['mark_all_read'])) {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php"><i class="fas fa-home"></i>Home</a>
+                        <a class="nav-link" href="dashboard.php"><i class="fas fa-home"></i> Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="post_job.php"><i class="fas fa-briefcase"></i>Post a Job</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="view_shortlisted_candidate.php"><i class="fas fa-users"></i>View Shortlisted Candidates</a>
+                        <a class="nav-link active" href="notifications.php"><i class="fas fa-bell"></i> Notifications</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="notifications.php">
-                            <i class="fas fa-bell"></i> Notifications
-                            <?php if ($unread_count > 0): ?>
-                                <span class="badge-notification"><?php echo $unread_count; ?></span>
-                            <?php endif; ?>
-                        </a>
-                    </li>
+                    
                     <li class="nav-item">
                         <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </li>
@@ -245,95 +193,110 @@ if (isset($_POST['mark_all_read'])) {
 
     <!-- Main Content -->
     <div class="container mt-4">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 mb-4">
-                <div class="sidebar">
-                    <h5 class="mb-3">Employer Menu</h5>
-                    <ul class="sidebar-menu">
-                        <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Home</a></li>
-                        <li><a href="post_job.php"><i class="fas fa-plus-circle"></i> Post a Job</a></li>
-                        <li><a href="view_shortlisted_candidate.php"><i class="fas fa-users"></i>View Shortlisted Candidates</a></li>
-                        <li><a class="active" href="notifications.php">
-                            <i class="fas fa-bell"></i> Notifications
-                            <?php if ($unread_count > 0): ?>
-                                <span class="badge-notification"><?php echo $unread_count; ?></span>
-                            <?php endif; ?>
-                        </a>
-                    </ul>
-                </div>
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Notifications</h2>
             </div>
-            
-            <!-- Notifications Content -->
-            <div class="col-md-9">
-                <div class="notification-card">
-                    <div class="notification-header">
-                        <h4 class="m-0">Notifications</h4>
-                        <?php if ($result->num_rows > 0): ?>
-                            <form method="post" class="d-inline">
-                                <button type="submit" name="mark_all_read" class="mark-all-read bg-transparent border-0">
-                                    <i class="fas fa-check-double"></i> Mark all as read
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <?php if ($result->num_rows > 0): ?>
-                        <?php while ($notification = $result->fetch_assoc()): ?>
-                            <div class="notification-item <?php echo $notification['is_read'] ? '' : 'unread'; ?>">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="title">
-                                        <?php 
-                                            if (strpos($notification['message'], 'candidate') !== false) {
-                                                echo '<i class="fas fa-user-tie text-primary me-2"></i>';
-                                            } elseif (strpos($notification['message'], 'application') !== false) {
-                                                echo '<i class="fas fa-file-alt text-success me-2"></i>';
-                                            } elseif (strpos($notification['message'], 'interview') !== false) {
-                                                echo '<i class="fas fa-calendar-check text-warning me-2"></i>';
-                                            } else {
-                                                echo '<i class="fas fa-info-circle text-info me-2"></i>';
-                                            }
-                                            
-                                            // Get the first sentence as the title
-                                            $title = strtok($notification['message'], '.');
-                                            echo $title;
-                                        ?>
-                                    </div>
-                                    <span class="time">
-                                        <?php 
-                                            $date = new DateTime($notification['created_at']);
-                                            echo $date->format('M d, Y - h:i A'); 
-                                        ?>
-                                    </span>
+            <p class="text-muted mb-0">View and manage all your notifications</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">All Notifications</h5>
+            </div>
+            <div class="card-body">               
+                <?php if ($result->num_rows > 0): ?>
+                    <?php while ($notification = $result->fetch_assoc()): ?>
+                        <?php
+                        // Fetch candidate name and job details if the notification is about a recommended candidate
+                        $candidate_name = null;
+                        $job_title = null;
+                        if ($notification['message'] === "A candidate has been recommended for your job posting. Please review and decide whether to send a job offer.") {
+                            // Fetch seeker_id and job_id from the interviews table
+                            $interview_id = $notification['interview_id'];
+                            $sql_interview = "SELECT a.seeker_id, a.job_id 
+                                            FROM interviews i 
+                                            JOIN applications a ON i.application_id = a.application_id 
+                                            WHERE i.interview_id = ?";
+                            $stmt_interview = $conn->prepare($sql_interview);
+                            $stmt_interview->bind_param("i", $interview_id);
+                            $stmt_interview->execute();
+                            $interview_result = $stmt_interview->get_result();
+
+                            if ($interview_result->num_rows > 0) {
+                                $interview_data = $interview_result->fetch_assoc();
+                                $seeker_id = $interview_data['seeker_id'];
+                                $job_id = $interview_data['job_id'];
+
+                                // Fetch candidate name
+                                $sql_candidate = "SELECT full_name FROM users WHERE user_id = ?";
+                                $stmt_candidate = $conn->prepare($sql_candidate);
+                                $stmt_candidate->bind_param("i", $seeker_id);
+                                $stmt_candidate->execute();
+                                $candidate_result = $stmt_candidate->get_result();
+                                if ($candidate_result->num_rows > 0) {
+                                    $candidate_name = $candidate_result->fetch_assoc()['full_name'];
+                                }
+
+                                // Fetch job title
+                                $sql_job = "SELECT title FROM job_postings WHERE job_id = ?";
+                                $stmt_job = $conn->prepare($sql_job);
+                                $stmt_job->bind_param("i", $job_id);
+                                $stmt_job->execute();
+                                $job_result = $stmt_job->get_result();
+                                if ($job_result->num_rows > 0) {
+                                    $job_title = $job_result->fetch_assoc()['title'];
+                                }
+                            }
+                        }
+                        ?>
+
+                        <div class="notification-item <?php echo $notification['status'] === 'unread' ? 'unread' : ''; ?>">
+                            <div class="notification-message">
+                                <i class="<?php echo $notification['status'] === 'unread' ? 'fas fa-circle text-warning me-2' : 'far fa-circle text-muted me-2'; ?>"></i>
+                                <?php echo $notification['message']; ?>
+                            </div>
+                            
+                            <?php if ($candidate_name && $job_title): ?>
+                                <div class="notification-detail">
+                                    <strong><i class="fas fa-user me-2"></i>Candidate:</strong> <?php echo $candidate_name; ?>
                                 </div>
-                                <div class="message">
-                                    <?php 
-                                        // Show the rest of the message without the first sentence
-                                        $message = substr($notification['message'], strlen($title) + 1);
-                                        echo trim($message);
-                                    ?>
+                                <div class="notification-detail">
+                                    <strong><i class="fas fa-briefcase me-2"></i>Job:</strong> <?php echo $job_title; ?>
                                 </div>
-                                
-                                <?php if (strpos($notification['message'], 'candidate has been recommended') !== false): ?>
-                                    <div class="d-flex gap-2">
-                                        <a href="view_candidate_details.php?notification_id=<?php echo $notification['notification_id']; ?>" class="action-btn">
-                                            <i class="fas fa-user"></i> View Candidate
-                                        </a>
-                                        <a href="send_job_offer.php?notification_id=<?php echo $notification['notification_id']; ?>" class="action-btn">
-                                            <i class="fas fa-paper-plane"></i> Send Offer
-                                        </a>
-                                    </div>
+                            <?php endif; ?>
+                            
+                            <div class="notification-time">
+                                <i class="far fa-clock me-1"></i>
+                                <?php echo date('M d, Y h:i A', strtotime($notification['created_at'])); ?>
+                            </div>
+
+                            <div class="notification-actions">
+                                <?php if ($notification['status'] === 'unread'): ?>
+                                    <a href="?mark_as_read=<?php echo $notification['notification_id']; ?>" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-check me-1"></i> Mark as Read
+                                    </a>
+                                <?php else: ?>
+                                    <a href="?mark_as_unread=<?php echo $notification['notification_id']; ?>" class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-undo me-1"></i> Mark as Unread
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php if ($notification['message'] === "A candidate has been recommended for your job posting. Please review and decide whether to send a job offer." && isset($seeker_id) && isset($job_id)): ?>
+                                    <a href="view_candidate_details.php?seeker_id=<?php echo $seeker_id; ?>&job_id=<?php echo $job_id; ?>" class="btn btn-sm btn-primary ms-2">
+                                        <i class="fas fa-eye me-1"></i> View Candidate Details
+                                    </a>
                                 <?php endif; ?>
                             </div>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <div class="no-notifications">
-                            <i class="fas fa-bell-slash"></i>
-                            <h5>No notifications yet</h5>
-                            <p>When you receive notifications, they will appear here.</p>
                         </div>
-                    <?php endif; ?>
-                </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="text-center py-5">
+                        <i class="fas fa-bell-slash text-muted mb-3" style="font-size: 3rem;"></i>
+                        <h5>No notifications found</h5>
+                        <p class="text-muted">You don't have any notifications at the moment.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -345,31 +308,11 @@ if (isset($_POST['mark_all_read'])) {
                 <div class="col-md-6">
                     <p class="mb-0">© 2025 GoSeekr. All rights reserved.</p>
                 </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Mark notification as read when clicked
-        document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const notificationId = this.dataset.id;
-                if (notificationId) {
-                    fetch('mark_notification_read.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'notification_id=' + notificationId
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            this.classList.remove('unread');
-                        }
-                    });
-                }
-            });
-        });
-    </script>
 </body>
 </html>

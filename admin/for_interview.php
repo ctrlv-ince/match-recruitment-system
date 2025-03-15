@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
 
 // Fetch scheduled interviews
 $sql = "SELECT interviews.interview_id, interviews.scheduled_date, interviews.status, 
+               interviews.notes, interviews.recommendation, 
                users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
         FROM interviews 
         JOIN applications ON interviews.application_id = applications.application_id 
@@ -78,28 +79,38 @@ $interviews_result = $conn->query($sql);
                                     echo '
                                     <div class="modal fade" id="updateInterviewModal' . $row['interview_id'] . '" tabindex="-1" aria-labelledby="updateInterviewModalLabel' . $row['interview_id'] . '" aria-hidden="true">
                                         <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="updateInterviewModalLabel' . $row['interview_id'] . '">Update Interview</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <form action="update_interview.php" method="POST">
-                                                        <input type="hidden" name="interview_id" value="' . $row['interview_id'] . '">
-                                                        <div class="mb-3">
-                                                            <label for="status" class="form-label">Status</label>
-                                                            <select class="form-control" id="status" name="status" required>
-                                                                <option value="pending" ' . ($row['status'] === 'pending' ? 'selected' : '') . '>Pending</option>
-                                                                <option value="completed" ' . ($row['status'] === 'completed' ? 'selected' : '') . '>Completed</option>
-                                                                <option value="cancelled" ' . ($row['status'] === 'cancelled' ? 'selected' : '') . '>Cancelled</option>
-                                                            </select>
-                                                        </div>
-                                                        <button type="submit" class="btn btn-primary">Update</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>';
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="updateInterviewModalLabel' . $row['interview_id'] . '">Update Interview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form action="update_interview.php" method="POST">
+                <input type="hidden" name="interview_id" value="' . $row['interview_id'] . '">
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-control" id="status" name="status" required>
+                        <option value="pending" ' . ($row['status'] === 'pending' ? 'selected' : '') . '>Pending</option>
+                        <option value="completed" ' . ($row['status'] === 'completed' ? 'selected' : '') . '>Completed</option>
+                        <option value="cancelled" ' . ($row['status'] === 'cancelled' ? 'selected' : '') . '>Cancelled</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">' . $row['notes'] . '</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="recommendation" class="form-label">Recommendation</label>
+                    <select class="form-control" id="recommendation" name="recommendation" required>
+                        <option value="recommended" ' . ($row['recommendation'] === 'recommended' ? 'selected' : '') . '>Recommended</option>
+                        <option value="not recommended" ' . ($row['recommendation'] === 'not recommended' ? 'selected' : '') . '>Not Recommended</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+</div>';
                                 }
                             } else {
                                 echo '<tr><td colspan="6">No scheduled interviews found.</td></tr>';

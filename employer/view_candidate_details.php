@@ -69,7 +69,7 @@ $result = $stmt->get_result();
 $documents = $result->fetch_all(MYSQLI_ASSOC);
 
 // Fetch application status and date
-$sql = "SELECT status, created_at FROM applications WHERE seeker_id = ? AND job_id = ?";
+$sql = "SELECT status, applied_at FROM applications WHERE seeker_id = ? AND job_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $seeker_id, $job_id);
 $stmt->execute();
@@ -306,9 +306,6 @@ $application = $result->fetch_assoc();
                         <a class="nav-link" href="post_job.php"><i class="fas fa-briefcase"></i>Post a Job</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="view_shortlisted_candidate.php"><i class="fas fa-users"></i>View Shortlisted Candidates</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="notifications.php"><i class="fas fa-bell"></i> Notifications</a>
                     </li>
                     
@@ -369,7 +366,7 @@ $application = $result->fetch_assoc();
                         <div class="application-info">
                             <h6 class="text-uppercase text-muted mb-3">Application Info</h6>
                             <p><strong>Status:</strong> <?php echo ucfirst($application['status']); ?></p>
-                            <p><strong>Applied On:</strong> <?php echo date('M d, Y', strtotime($application['created_at'])); ?></p>
+                            <p><strong>Applied On:</strong> <?php echo date('M d, Y', strtotime($application['applied_at'])); ?></p>
                         </div>
                         <?php endif; ?>
                     </div>

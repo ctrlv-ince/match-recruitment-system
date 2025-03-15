@@ -52,27 +52,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$has_applied) {
 
         // Handle document uploads
         if (!empty($_FILES['documents']['name'][0])) {
-            $uploadDir = 'uploads/application_documents/'; // Directory to store uploaded files
+            $uploadDir = "uploads/application_documents/$user_id/"; // Base directory to store uploaded files
+
+            // Create the base directory if it doesn't exist
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true); // Create the directory if it doesn't exist
             }
 
             foreach ($_FILES['documents']['tmp_name'] as $key => $tmp_name) {
+                $document_type = $_POST['document_types'][$key]; // Get the document type
+                $typeDir = $uploadDir . $document_type . '/'; // Directory for the specific document type
+
+                // Create the document type directory if it doesn't exist
+                if (!is_dir($typeDir)) {
+                    mkdir($typeDir, 0755, true); // Create the directory if it doesn't exist
+                }
+
                 $fileName = uniqid() . '_' . basename($_FILES['documents']['name'][$key]); // Unique file name
-                $filePath = $uploadDir . $fileName;
+                $filePath = $typeDir . $fileName; // Full path to the file
 
                 // Move the uploaded file to the target directory
                 if (move_uploaded_file($tmp_name, $filePath)) {
                     // Insert document details into the database
-                    $document_type = $_POST['document_types'][$key];
                     $sql = "INSERT INTO application_documents (application_id, document_type, document_path) 
                             VALUES ($application_id, '$document_type', '$filePath')";
-                    $conn->query($sql);
+                    if (!$conn->query($sql)) {
+                        $message = "Error uploading document: " . $conn->error;
+                        break;
+                    }
+                } else {
+                    $message = "Error moving uploaded file for document type: $document_type.";
+                    break;
                 }
             }
+
+            if (empty($message)) {
+                $message = "Application submitted successfully!";
+            }
+        } else {
+            $message = "No documents were uploaded.";
         }
 
-        $message = "Application submitted successfully!";
         $has_applied = true;
     } else {
         $message = "Error: " . $conn->error;

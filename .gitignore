@@ -1,0 +1,4 @@
+employer/uploads/*
+!employer/uploads/.gitkeep
+job_seeker/uploads/*
+!job_seeker/uploads/.gitkeep
