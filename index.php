@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'db.php';
 
 // Fetch popular jobs (recently posted and approved)
