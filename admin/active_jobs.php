@@ -83,31 +83,94 @@ $users_result = $conn->query($sql);
 
                                     echo "<td>";
                                     if ($candidates_result->num_rows > 0) {
-                                        echo "<ul class='list-unstyled'>";
+                                        echo "<button type='button' class='btn btn-primary btn-sm' data-bs-toggle='modal' data-bs-target='#candidatesModal{$job_id}'>
+                                            View {$candidates_result->num_rows} Candidates
+                                        </button>";
+                                        
+                                        // Create modal for candidates
+                                        echo "<div class='modal fade' id='candidatesModal{$job_id}' tabindex='-1' aria-labelledby='candidatesModalLabel{$job_id}' aria-hidden='true'>
+                                            <div class='modal-dialog modal-xl'>
+                                                <div class='modal-content'>
+                                                    <div class='modal-header'>
+                                                        <h5 class='modal-title' id='candidatesModalLabel{$job_id}'>Candidates for {$row['title']}</h5>
+                                                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                                                    </div>
+                                                    <div class='modal-body'>
+                                                        <table class='table table-bordered'>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Candidate</th>
+                                                                    <th>Status</th>
+                                                                    <th>Documents</th>
+                                                                    <th>Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>";
+                                        
+                                        // Reset the pointer to the beginning of the result set
+                                        $candidates_result->data_seek(0);
+                                        
                                         while ($candidate = $candidates_result->fetch_assoc()) {
                                             $application_id = $candidate['application_id'];
-                                            echo "<li class='mb-2'>{$candidate['full_name']} - Application Status: " . ($candidate['status'] ?? 'pending') . "</li>";
-
+                                            $seeker_id = $candidate['seeker_id'];
+                                            
+                                            echo "<tr>
+                                                <td>{$candidate['full_name']}</td>
+                                                <td>" . ($candidate['status'] ?? 'pending') . "</td>
+                                                <td>";
+                                            
+                                            // Fetch uploaded documents for this candidate's application
+                                            $sql_documents = "SELECT application_documents.document_type, application_documents.document_path 
+                                                              FROM application_documents 
+                                                              JOIN applications ON application_documents.application_id = applications.application_id 
+                                                              WHERE applications.seeker_id = $seeker_id AND applications.job_id = $job_id";
+                                            $documents_result = $conn->query($sql_documents);
+                                            
+                                            if ($documents_result->num_rows > 0) {
+                                                echo "<ul class='list-unstyled'>";
+                                                while ($document = $documents_result->fetch_assoc()) {
+                                                    echo "<li><a href='../job_seeker/{$document['document_path']}' target='_blank'>{$document['document_type']}</a></li>";
+                                                }
+                                                echo "</ul>";
+                                            } else {
+                                                echo "No documents uploaded.";
+                                            }
+                                            
+                                            echo "</td>
+                                                <td>";
+                                            
                                             // Only show "Shortlist" and "Reject" buttons for candidates with status 'applied'
                                             if ($candidate['status'] === 'applied') {
                                                 // Hide buttons if the hiring process is completed
                                                 if ($candidate['employer_decision'] === 'approved' || $candidate['employer_decision'] === 'rejected') {
-                                                    echo "<li><p class='text-muted'>Hiring process completed.</p></li>";
+                                                    echo "<p class='text-muted'>Hiring process completed.</p>";
                                                 } else {
-                                                    echo "<li class='mb-2'>
-                                                        <form action='shortlist_candidate.php' method='POST' style='display:inline;'>
-                                                            <input type='hidden' name='application_id' value='{$application_id}'>
-                                                            <button type='submit' class='btn btn-success btn-sm'>Shortlist</button>
-                                                        </form>
-                                                        <form action='reject_candidate.php' method='POST' style='display:inline;'>
-                                                            <input type='hidden' name='application_id' value='{$application_id}'>
-                                                            <button type='submit' class='btn btn-danger btn-sm'>Reject</button>
-                                                        </form>
-                                                    </li>";
+                                                    echo "<form action='shortlist_candidate.php' method='POST' style='display:inline;'>
+                                                        <input type='hidden' name='application_id' value='{$application_id}'>
+                                                        <button type='submit' class='btn btn-success btn-sm'>Shortlist</button>
+                                                    </form>
+                                                    <form action='reject_candidate.php' method='POST' style='display:inline;'>
+                                                        <input type='hidden' name='application_id' value='{$application_id}'>
+                                                        <button type='submit' class='btn btn-danger btn-sm'>Reject</button>
+                                                    </form>";
                                                 }
+                                            } else {
+                                                echo "<p class='text-muted'>Status: {$candidate['status']}</p>";
                                             }
+                                            
+                                            echo "</td>
+                                            </tr>";
                                         }
-                                        echo "</ul>";
+                                        
+                                        echo "</tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class='modal-footer'>
+                                                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>";
                                     } else {
                                         echo "No candidates yet.";
                                     }
