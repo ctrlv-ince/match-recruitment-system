@@ -54,7 +54,6 @@ $users_result = $conn->query($sql);
                                 <th>Employer</th>
                                 <th>Quota</th>
                                 <th>Candidates</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -113,10 +112,6 @@ $users_result = $conn->query($sql);
                                         echo "No candidates yet.";
                                     }
                                     echo "</td>";
-                                    echo "<td>
-                                        <a href='edit_job.php?id={$job_id}' class='btn btn-primary btn-sm'>Edit</a>
-                                        <a href='view_job.php?id={$job_id}' class='btn btn-info btn-sm'>View</a>
-                                    </td>";
                                     echo "</tr>";
                                 }
                             } else {

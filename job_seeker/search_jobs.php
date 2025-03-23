@@ -21,6 +21,29 @@ $seeker_data = $result->fetch_assoc();
 $seeker_skills = $seeker_data['skills'];
 $seeker_location = $seeker_data['location'];
 
+// Helper function to check if locations are in the same area
+function areLocationsNearby($location1, $location2) {
+    // Convert to lowercase for case-insensitive comparison
+    $loc1 = strtolower($location1);
+    $loc2 = strtolower($location2);
+    
+    // Exact match
+    if ($loc1 === $loc2) {
+        return true;
+    }
+    
+    // Extract city names and areas
+    $loc1_parts = preg_split('/[,\s]+/', $loc1);
+    $loc2_parts = preg_split('/[,\s]+/', $loc2);
+    
+    // Check for common city names or areas
+    $common_parts = array_intersect($loc1_parts, $loc2_parts);
+    
+    // If there are at least 2 common parts, consider them nearby
+    // This will match cases like "Lower Bicutan, Taguig City" and "Western Bicutan, Taguig City"
+    return count($common_parts) >= 2;
+}
+
 // Fetch approved jobs that match the search term, skills, and location
 $sql = "SELECT *, 
         CASE 
@@ -263,6 +286,8 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
                 }
                 if ($row['location'] === $seeker_location) {
                     echo "<p class='text-success'><i class='fas fa-check-circle'></i>This job is in your location!</p>";
+                } elseif (areLocationsNearby($row['location'], $seeker_location)) {
+                    echo "<p class='text-success'><i class='fas fa-check-circle'></i>This job is near your location!</p>";
                 }
                 echo "<a href='view_job.php?id={$row['job_id']}' class='btn btn-primary'>
                     <i class='fas fa-eye'></i>View Details
