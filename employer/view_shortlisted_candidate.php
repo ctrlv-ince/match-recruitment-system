@@ -12,7 +12,7 @@ $seeker_id = $_GET['seeker_id'];
 $job_id = $_GET['job_id'];
 
 // Fetch candidate details
-$sql = "SELECT users.full_name, users.email, job_seekers.skills, job_seekers.resume_image 
+$sql = "SELECT users.full_name, users.email, job_seekers.skills
         FROM users 
         JOIN job_seekers ON users.user_id = job_seekers.seeker_id 
         WHERE users.user_id = ?";

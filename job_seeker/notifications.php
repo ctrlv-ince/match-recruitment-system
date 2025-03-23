@@ -48,10 +48,16 @@ function extractOfferIdFromMessage($message)
 {
     $pattern = '/Offer ID: (\d+)/'; // Matches "Offer ID: <number>"
     if (preg_match($pattern, $message, $matches)) {
+        // Debugging: Print the matches array
+        echo "<pre>";
+        print_r($matches);
+        echo "</pre>";
+        
         return $matches[1]; // Returns the offer ID
     }
     return null; // Return null if no offer ID is found
 }
+
 // Fetch the number of unread notifications
 $sql = "SELECT COUNT(*) AS unread_count FROM notifications WHERE user_id = $user_id AND status = 'unread'";
 $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
