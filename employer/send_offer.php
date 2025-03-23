@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $application_id = $application['application_id'];
 
     // Update the employer_decision status in the applications table to "approved"
-    $sql_update = "UPDATE applications SET employer_decision = 'approved' WHERE application_id = ?";
+    $sql_update = "UPDATE applications SET employer_decision = 'approved', status = 'offered' WHERE application_id = ?";
     $stmt_update = $conn->prepare($sql_update);
     if (!$stmt_update) {
         header("Location: view_candidate_details.php?seeker_id=$seeker_id&job_id=$job_id&status=error&message=" . urlencode("Database error: " . $conn->error));

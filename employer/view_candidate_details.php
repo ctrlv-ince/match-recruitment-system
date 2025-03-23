@@ -12,7 +12,7 @@ $seeker_id = $_GET['seeker_id'];
 $job_id = $_GET['job_id'];
 
 // Fetch candidate details
-$sql = "SELECT users.full_name, users.email, job_seekers.skills, job_seekers.resume_image 
+$sql = "SELECT users.full_name, users.email, job_seekers.skills
         FROM users 
         JOIN job_seekers ON users.user_id = job_seekers.seeker_id 
         WHERE users.user_id = ?";
@@ -75,6 +75,31 @@ $stmt->bind_param("ii", $seeker_id, $job_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $application = $result->fetch_assoc();
+
+// Check if an offer has already been sent
+$sql = "SELECT * FROM job_offers WHERE seeker_id = ? AND job_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $seeker_id, $job_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$offer_sent = $result->num_rows > 0;
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
+    $offer_details = $_POST['offer_details'];
+    $salary = $_POST['salary'];
+
+    // Insert the offer into the database
+    $sql = "INSERT INTO job_offers (seeker_id, job_id, offer_details, salary) VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iisd", $seeker_id, $job_id, $offer_details, $salary);
+    if ($stmt->execute()) {
+        $offer_sent = true; // Update flag to indicate offer has been sent
+        $success_message = "Job offer sent successfully!";
+    } else {
+        $error_message = "Failed to send job offer. Please try again.";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -329,6 +354,20 @@ $application = $result->fetch_assoc();
             <p class="text-muted mb-0">Job Position: <?php echo $job_title; ?></p>
         </div>
         
+        <!-- Success Message -->
+        <?php if (isset($success_message)): ?>
+            <div class="alert alert-success mt-3">
+                <?php echo $success_message; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Error Message -->
+        <?php if (isset($error_message)): ?>
+            <div class="alert alert-danger mt-3">
+                <?php echo $error_message; ?>
+            </div>
+        <?php endif; ?>
+
         <div class="row">
             <!-- Candidate Profile -->
             <div class="col-md-4">
@@ -421,43 +460,47 @@ $application = $result->fetch_assoc();
                 </div>
                 
                 <!-- Send Job Offer Form -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Send Job Offer</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="send_offer.php" method="POST">
-                            <input type="hidden" name="seeker_id" value="<?php echo $seeker_id; ?>">
-                            <input type="hidden" name="job_id" value="<?php echo $job_id; ?>">
-                            
-                            <div class="mb-3">
-                                <label for="offer_details" class="form-label">Offer Details</label>
-                                <textarea class="form-control" id="offer_details" name="offer_details" rows="5" placeholder="Describe the job offer details, including position, start date, benefits, and any other relevant information..." required></textarea>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="salary" class="form-label">Salary (Monthly)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₱</span>
-                                        <input type="number" class="form-control" id="salary" name="salary" step="0.01" min="0" placeholder="50000.00" required>
+                <?php if (!$offer_sent): ?>
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Send Job Offer</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="" method="POST">
+                                <input type="hidden" name="seeker_id" value="<?php echo $seeker_id; ?>">
+                                <input type="hidden" name="job_id" value="<?php echo $job_id; ?>">
+                                
+                                <div class="mb-3">
+                                    <label for="offer_details" class="form-label">Offer Details</label>
+                                    <textarea class="form-control" id="offer_details" name="offer_details" rows="5" placeholder="Describe the job offer details, including position, start date, benefits, and any other relevant information..." required></textarea>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="salary" class="form-label">Salary (Monthly)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₱</span>
+                                            <input type="number" class="form-control" id="salary" name="salary" step="0.01" min="0" placeholder="50000.00" required>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                            </div>
-                            
-                            
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane me-1"></i> Send Offer
-                                </button>
-                                <a href="dashboard.php" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                                </a>
-                            </div>
-                        </form>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane me-1"></i> Send Offer
+                                    </button>
+                                    <a href="dashboard.php" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
+                <?php else: ?>
+                    <div class="alert alert-info mt-4">
+                        You have already sent a job offer to this candidate.
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -475,22 +518,5 @@ $application = $result->fetch_assoc();
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Set default start date to 2 weeks from today
-        window.addEventListener('DOMContentLoaded', function() {
-            const startDateInput = document.getElementById('start_date');
-            if (startDateInput) {
-                const twoWeeksFromNow = new Date();
-                twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
-                
-                // Format the date as YYYY-MM-DD for the input
-                const year = twoWeeksFromNow.getFullYear();
-                const month = String(twoWeeksFromNow.getMonth() + 1).padStart(2, '0');
-                const day = String(twoWeeksFromNow.getDate()).padStart(2, '0');
-                
-                startDateInput.value = `${year}-${month}-${day}`;
-            }
-        });
-    </script>
 </body>
 </html>
