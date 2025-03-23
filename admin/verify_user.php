@@ -33,16 +33,60 @@ if (isset($_GET['id']) && isset($_GET['action'])) {
                     "Your Account Has Been Verified" : 
                     "Your Account Application Status";
                 
-                $mail_body = ($action === 'verify') ? 
-                    "Dear $user_name,\n\nCongratulations! Your account has been verified. You can now access all features of our platform.\n\nThank you for joining us!\n\nBest regards,\nThe Recruitment System Team" : 
-                    "Dear $user_name,\n\nWe regret to inform you that your account application has been rejected. If you believe this is an error, please contact our support team for assistance.\n\nBest regards,\nThe Recruitment System Team";
+                // Create HTML email content
+                $mail_body = '
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        .container { 
+                            background-color: #f9f9f9;
+                            padding: 20px;
+                            margin: 20px 0;
+                        }
+                        .status {
+                            color: #ffffff;
+                            padding: 5px 10px;
+                            border-radius: 4px;
+                            display: inline-block;
+                        }
+                        .status-verified { background-color: #28a745; }
+                        .status-rejected { background-color: #ff4444; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Account Status Update</h2>
+                    <p>Dear ' . $user_name . ',</p>';
                 
-                // Configure email headers
+                if ($action === 'verify') {
+                    $mail_body .= '
+                    <p>Congratulations! Your account has been <span class="status status-verified">Verified</span>.</p>
+                    <div class="container">
+                        <p>You can now access all features of our platform.</p>
+                        <p>Thank you for joining us!</p>
+                    </div>';
+                } else {
+                    $mail_body .= '
+                    <p>We regret to inform you that your account application has been <span class="status status-rejected">Rejected</span>.</p>
+                    <div class="container">
+                        <p>If you believe this is an error, please contact our support team for assistance.</p>
+                    </div>';
+                }
+                
+                $mail_body .= '
+                    <p>If you have any questions, please contact us:</p>
+                    <p>Email: vinceerolborja@gmail.com</p>
+                        
+                    <p>Best regards,<br>The Recruitment System Team</p>
+                </body>
+                </html>';
+                
+                // Configure email headers for HTML content
                 $to = $user_email;
-                $headers = "From: vinceerolborja@gmail.com\r\n";
-                $headers .= "Reply-To: vinceerolborja@gmail.com\r\n";
-                $headers .= "MIME-Version: 1.0\r\n";
-                $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+                $headers = "MIME-Version: 1.0" . "\r\n";
+                $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+                $headers .= 'From: Recruitment System <vinceerolborja@gmail.com>' . "\r\n";
                 
                 // Send the email using the configured sendmail
                 mail($to, $mail_subject, $mail_body, $headers);
