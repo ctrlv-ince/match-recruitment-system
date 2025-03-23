@@ -279,6 +279,7 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
                                 <?php if (strpos($notification['message'], 'received a job offer') !== false): ?>
                                     <?php
                                     $offer_id = extractOfferIdFromMessage($notification['message']);
+                                    echo "Extracted Offer ID: " . $offer_id . "<br>"; // Debugging
                                     if ($offer_id):
                                     ?>
                                         <a href="respond_offer.php?offer_id=<?php echo $offer_id; ?>" class="btn btn-sm btn-primary ms-2">
