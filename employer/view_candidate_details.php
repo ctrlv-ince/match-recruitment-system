@@ -89,15 +89,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
     $offer_details = $_POST['offer_details'];
     $salary = $_POST['salary'];
 
-    // Insert the offer into the database
-    $sql = "INSERT INTO job_offers (seeker_id, job_id, offer_details, salary) VALUES (?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iisd", $seeker_id, $job_id, $offer_details, $salary);
-    if ($stmt->execute()) {
-        $offer_sent = true; // Update flag to indicate offer has been sent
-        $success_message = "Job offer sent successfully!";
+    // First, get the application_id for this seeker and job
+    $sql_app = "SELECT application_id FROM applications WHERE seeker_id = ? AND job_id = ?";
+    $stmt_app = $conn->prepare($sql_app);
+    $stmt_app->bind_param("ii", $seeker_id, $job_id);
+    $stmt_app->execute();
+    $app_result = $stmt_app->get_result();
+    
+    if ($app_result->num_rows > 0) {
+        $app_data = $app_result->fetch_assoc();
+        $application_id = $app_data['application_id'];
+        
+        // Update application status to 'offered'
+        $sql_update = "UPDATE applications SET status = 'offered' WHERE application_id = ?";
+        $stmt_update = $conn->prepare($sql_update);
+        $stmt_update->bind_param("i", $application_id);
+        $stmt_update->execute();
+        
+        // Insert the offer into the database with application_id
+        $employer_id = $_SESSION['user_id']; // Get employer ID from session
+        $sql = "INSERT INTO job_offers (application_id, employer_id, seeker_id, job_id, offer_details, salary, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, NOW())";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iiiisd", $application_id, $employer_id, $seeker_id, $job_id, $offer_details, $salary);
+        
+        if ($stmt->execute()) {
+            $offer_sent = true; // Update flag to indicate offer has been sent
+            $success_message = "Job offer sent successfully!";
+            
+            // Add notification for the job seeker
+            $sql_notify = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
+            $stmt_notify = $conn->prepare($sql_notify);
+            $message = "You have received a job offer. Please check your offers.";
+            $stmt_notify->bind_param("is", $seeker_id, $message);
+            $stmt_notify->execute();
+        } else {
+            $error_message = "Failed to send job offer: " . $stmt->error;
+        }
     } else {
-        $error_message = "Failed to send job offer. Please try again.";
+        $error_message = "No application found for this candidate and job.";
     }
 }
 ?>

@@ -15,54 +15,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $skills = $_POST['skills']; // Added skills field
         $user_type = 'job_seeker';
 
-        // Insert into users table
-        $sql = "INSERT INTO users (full_name, email, password_hash, user_type) VALUES ('$full_name', '$email', '$password', '$user_type')";
-        if ($conn->query($sql)) {
-            $user_id = $conn->insert_id;
-
-            // Insert into job_seekers table
-            $sql = "INSERT INTO job_seekers (seeker_id, location, skills) VALUES ($user_id, '$location', '$skills')";
+        // Check if email already exists
+        $check_email_sql = "SELECT * FROM users WHERE email = ?";
+        $stmt = $conn->prepare($check_email_sql);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $message = 'Error: Email address already exists. Please use a different email or login to your existing account.';
+        } else {
+            // Insert into users table
+            $sql = "INSERT INTO users (full_name, email, password_hash, user_type) VALUES ('$full_name', '$email', '$password', '$user_type')";
             if ($conn->query($sql)) {
-                // Handle file uploads
-                $document_types = ['valid_id', 'tin', 'resume', 'photo', 'qualification'];
-                foreach ($document_types as $type) {
-                    if (isset($_FILES[$type]) && $_FILES[$type]['error'] === UPLOAD_ERR_OK) {
-                        $file_name = $_FILES[$type]['name'];
-                        $file_tmp = $_FILES[$type]['tmp_name'];
-                        $upload_dir = "uploads/job_seekers/$user_id/$type/";
+                $user_id = $conn->insert_id;
 
-                        // Create directory if it doesn't exist
-                        if (!is_dir($upload_dir)) {
-                            mkdir($upload_dir, 0777, true); // Create directory recursively
-                        }
+                // Insert into job_seekers table
+                $sql = "INSERT INTO job_seekers (seeker_id, location, skills) VALUES ($user_id, '$location', '$skills')";
+                if ($conn->query($sql)) {
+                    // Handle file uploads
+                    $document_types = ['valid_id', 'tin', 'resume', 'photo', 'qualification'];
+                    foreach ($document_types as $type) {
+                        if (isset($_FILES[$type]) && $_FILES[$type]['error'] === UPLOAD_ERR_OK) {
+                            $file_name = $_FILES[$type]['name'];
+                            $file_tmp = $_FILES[$type]['tmp_name'];
+                            $upload_dir = "uploads/job_seekers/$user_id/$type/";
 
-                        $file_path = $upload_dir . basename($file_name);
+                            // Create directory if it doesn't exist
+                            if (!is_dir($upload_dir)) {
+                                mkdir($upload_dir, 0777, true); // Create directory recursively
+                            }
 
-                        // Move uploaded file
-                        if (move_uploaded_file($file_tmp, $file_path)) {
-                            // Insert document into job_seeker_documents table
-                            $sql = "INSERT INTO job_seeker_documents (seeker_id, document_type, document_path) VALUES ($user_id, '$type', '$file_path')";
-                            if (!$conn->query($sql)) {
-                                $message = "Error uploading $type: " . $conn->error;
+                            $file_path = $upload_dir . basename($file_name);
+
+                            // Move uploaded file
+                            if (move_uploaded_file($file_tmp, $file_path)) {
+                                // Insert document into job_seeker_documents table
+                                $sql = "INSERT INTO job_seeker_documents (seeker_id, document_type, document_path) VALUES ($user_id, '$type', '$file_path')";
+                                if (!$conn->query($sql)) {
+                                    $message = "Error uploading $type: " . $conn->error;
+                                    break;
+                                }
+                            } else {
+                                $message = "Error moving uploaded file for $type.";
                                 break;
                             }
-                        } else {
-                            $message = "Error moving uploaded file for $type.";
-                            break;
                         }
                     }
-                }
 
-                if (empty($message)) {
-                    $message = "Registration successful!";
+                    if (empty($message)) {
+                        $message = "Registration successful!";
+                    }
+                } else {
+                    // Rollback user insertion if job seeker insertion fails
+                    $conn->query("DELETE FROM users WHERE user_id = $user_id");
+                    $message = "Error: " . $sql . "<br>" . $conn->error;
                 }
             } else {
-                // Rollback user insertion if job seeker insertion fails
-                $conn->query("DELETE FROM users WHERE user_id = $user_id");
                 $message = "Error: " . $sql . "<br>" . $conn->error;
             }
-        } else {
-            $message = "Error: " . $sql . "<br>" . $conn->error;
         }
     }
 }

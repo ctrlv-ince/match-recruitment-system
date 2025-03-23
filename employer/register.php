@@ -14,69 +14,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $company_name = $_POST['company_name'];
         $user_type = 'employer';
 
-        // Insert into users table
-        $sql = "INSERT INTO users (full_name, email, password_hash, user_type) VALUES (?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssss", $full_name, $email, $password, $user_type);
-
-        if ($stmt->execute()) {
-            $user_id = $stmt->insert_id;
-
-            // Insert into employers table
-            $sql = "INSERT INTO employers (employer_id, company_name) VALUES (?, ?)";
+        // Check if email already exists
+        $check_email_sql = "SELECT * FROM users WHERE email = ?";
+        $check_stmt = $conn->prepare($check_email_sql);
+        $check_stmt->bind_param("s", $email);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        
+        if ($check_result->num_rows > 0) {
+            $message = "Error: Email address already exists. Please use a different email or login to your existing account.";
+        } else {
+            // Insert into users table
+            $sql = "INSERT INTO users (full_name, email, password_hash, user_type) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("is", $user_id, $company_name);
+            $stmt->bind_param("ssss", $full_name, $email, $password, $user_type);
 
             if ($stmt->execute()) {
-                // Handle file uploads
-                $document_types = [
-                    'business_permit',
-                    'sec_dti_registration',
-                    'tin',
-                    'bir_certificate',
-                    'official_documents'
-                ];
+                $user_id = $stmt->insert_id;
 
-                foreach ($document_types as $type) {
-                    if (isset($_FILES[$type]) && $_FILES[$type]['error'] === UPLOAD_ERR_OK) {
-                        $file_name = $_FILES[$type]['name'];
-                        $file_tmp = $_FILES[$type]['tmp_name'];
-                        $upload_dir = "uploads/employers/$user_id/$type/";
+                // Insert into employers table
+                $sql = "INSERT INTO employers (employer_id, company_name) VALUES (?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("is", $user_id, $company_name);
 
-                        // Create directory if it doesn't exist
-                        if (!is_dir($upload_dir)) {
-                            mkdir($upload_dir, 0777, true);
-                        }
+                if ($stmt->execute()) {
+                    // Handle file uploads
+                    $document_types = [
+                        'business_permit',
+                        'sec_dti_registration',
+                        'tin',
+                        'bir_certificate',
+                        'official_documents'
+                    ];
 
-                        $file_path = $upload_dir . basename($file_name);
+                    foreach ($document_types as $type) {
+                        if (isset($_FILES[$type]) && $_FILES[$type]['error'] === UPLOAD_ERR_OK) {
+                            $file_name = $_FILES[$type]['name'];
+                            $file_tmp = $_FILES[$type]['tmp_name'];
+                            $upload_dir = "uploads/employers/$user_id/$type/";
 
-                        // Move uploaded file
-                        if (move_uploaded_file($file_tmp, $file_path)) {
-                            // Insert document into employer_documents table
-                            $sql = "INSERT INTO employer_documents (employer_id, document_type, document_path) VALUES (?, ?, ?)";
-                            $stmt = $conn->prepare($sql);
-                            $stmt->bind_param("iss", $user_id, $type, $file_path);
-                            $stmt->execute();
+                            // Create directory if it doesn't exist
+                            if (!is_dir($upload_dir)) {
+                                mkdir($upload_dir, 0777, true);
+                            }
+
+                            $file_path = $upload_dir . basename($file_name);
+
+                            // Move uploaded file
+                            if (move_uploaded_file($file_tmp, $file_path)) {
+                                // Insert document into employer_documents table
+                                $sql = "INSERT INTO employer_documents (employer_id, document_type, document_path) VALUES (?, ?, ?)";
+                                $stmt = $conn->prepare($sql);
+                                $stmt->bind_param("iss", $user_id, $type, $file_path);
+                                $stmt->execute();
+                            } else {
+                                $message = "Error uploading $type.";
+                                break;
+                            }
                         } else {
-                            $message = "Error uploading $type.";
+                            $message = "Missing file for $type.";
                             break;
                         }
-                    } else {
-                        $message = "Missing file for $type.";
-                        break;
                     }
-                }
 
-                if (empty($message)) {
-                    $message = "Registration successful! Your documents are under review.";
+                    if (empty($message)) {
+                        $message = "Registration successful! Your documents are under review.";
+                    }
+                } else {
+                    // Rollback user insertion if employer insertion fails
+                    $conn->query("DELETE FROM users WHERE user_id = $user_id");
+                    $message = "Error: " . $stmt->error;
                 }
             } else {
-                // Rollback user insertion if employer insertion fails
-                $conn->query("DELETE FROM users WHERE user_id = $user_id");
                 $message = "Error: " . $stmt->error;
             }
-        } else {
-            $message = "Error: " . $stmt->error;
         }
     }
 }

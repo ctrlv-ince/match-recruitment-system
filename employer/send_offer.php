@@ -83,8 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $company_name = $details['company_name'];
             $job_title = $details['title'];
 
-            // Notify the job seeker with company name and job title
-            $message = "You have received a job offer from $company_name for the position: $job_title. Please respond.";
+            // Notify the job seeker with company name, job title, and offer ID
+            $message = "You have received a job offer from $company_name for the position: $job_title (Offer ID: $offer_id). Please respond.";
             $sql_notify = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
             $stmt_notify = $conn->prepare($sql_notify);
             if (!$stmt_notify) {
@@ -94,9 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt_notify->bind_param("is", $seeker_id, $message);
             $stmt_notify->execute();
+            
+            // Add success message for the employer
+            $_SESSION['success_message'] = "Job offer for $job_title has been successfully sent to the candidate!";
         } else {
-            // If company name or job title cannot be fetched, use a generic message
-            $message = "You have received a job offer. Please respond.";
+            // If company name or job title cannot be fetched, use a generic message with offer ID
+            $message = "You have received a job offer (Offer ID: $offer_id). Please respond.";
             $sql_notify = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
             $stmt_notify = $conn->prepare($sql_notify);
             if (!$stmt_notify) {
@@ -106,6 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt_notify->bind_param("is", $seeker_id, $message);
             $stmt_notify->execute();
+            
+            // Add generic success message for the employer
+            $_SESSION['success_message'] = "Job offer has been successfully sent to the candidate!";
         }
 
         // Redirect with success message
