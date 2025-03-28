@@ -31,7 +31,123 @@ $interviews_result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../css/styles.css" rel="stylesheet">
 </head>
-
+<style>
+    /* Enhanced Table Styling - Add this to your existing styles */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        background: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: #3498db;
+        color: white;
+        font-weight: 500;
+        padding: 15px;
+        border: none;
+        position: sticky;
+        top: 0;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #e9f7fe;
+    }
+    
+    .table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e0e0e0;
+        vertical-align: middle;
+    }
+    
+    /* Status Badge Styling */
+    .table td:nth-child(3) {
+        font-weight: 500;
+    }
+    
+    .table td:nth-child(3):before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .table td:nth-child(3)[data-status="pending"] {
+        color: #FFA500;
+    }
+    
+    .table td:nth-child(3)[data-status="pending"]:before {
+        background: #FFA500;
+    }
+    
+    /* Document Links Styling */
+    .table td:nth-child(4) a {
+        color: #2980b9;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    
+    .table td:nth-child(4) a:hover {
+        color: #1a5276;
+        text-decoration: underline;
+    }
+    
+    /* Button Styling */
+    .table .btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    
+    .table .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .table .btn-success {
+        background: #27ae60;
+        border-color: #27ae60;
+    }
+    
+    .table .btn-success:hover {
+        background: #219653;
+        border-color: #1e8449;
+    }
+    
+    .table .btn-danger {
+        background: #e74c3c;
+        border-color: #e74c3c;
+    }
+    
+    .table .btn-danger:hover {
+        background: #c0392b;
+        border-color: #b03a2e;
+    }
+    
+    /* Empty State Styling */
+    .table td.empty-state {
+        text-align: center;
+        color: #7f8c8d;
+        font-style: italic;
+        padding: 30px;
+    }
+</style>
 <body>
     <!-- Header -->
     <?php include 'includes/header.php'; ?>

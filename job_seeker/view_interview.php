@@ -293,12 +293,12 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
                 if ($row['status'] === 'pending') {
                     echo "<form action='view_interview.php' method='POST' class='d-inline'>";
                     echo "<input type='hidden' name='interview_id' value='{$row['interview_id']}'>";
-                    echo "<button type='submit' name='action' value='confirm' class='btn btn-success me-2'>";
-                    echo "<i class='fas fa-check-circle'></i>Confirm";
-                    echo "</button>";
-                    echo "<button type='submit' name='action' value='decline' class='btn btn-danger'>";
-                    echo "<i class='fas fa-times-circle'></i>Decline";
-                    echo "</button>";
+                    // echo "<button type='submit' name='action' value='confirm' class='btn btn-success me-2'>";
+                    // echo "<i class='fas fa-check-circle'></i>Confirm";
+                    // echo "</button>";
+                    // echo "<button type='submit' name='action' value='decline' class='btn btn-danger'>";
+                    // echo "<i class='fas fa-times-circle'></i>Decline";
+                    // echo "</button>";
                     echo "</form>";
                 }
                 echo "</div>";

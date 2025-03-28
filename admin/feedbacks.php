@@ -31,7 +31,81 @@ $interviews_result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../css/styles.css" rel="stylesheet">
 </head>
+<style>
+    /* Unified Admin Table Design System */
+    .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 0.925em;
+        margin: 20px 0;
+    }
 
+    /* Consistent Header Styling */
+    .table thead th {
+        background: #2c3e50;
+        color: #fff;
+        padding: 14px 20px;
+        font-weight: 500;
+        text-align: left;
+        border: none;
+        position: sticky;
+        top: 0;
+    }
+
+    /* Consistent Body Styling */
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f1f7fe;
+    }
+
+    .table td {
+        padding: 14px 20px;
+        border-bottom: 1px solid #eaeff5;
+        vertical-align: middle;
+    }
+
+    /* Consistent Status/Data Point Styling */
+    .table td:nth-child(2) { /* Rating column */
+        color: #e67e22;
+        font-weight: 500;
+    }
+
+    /* Consistent Action Button Area */
+    .table td:last-child {
+        white-space: nowrap;
+    }
+
+    /* Consistent Empty State */
+    .table td.empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #7f8c8d;
+        font-style: italic;
+        background: #f9f9f9;
+    }
+    
+    @media (max-width: 768px) {
+        .table {
+            font-size: 0.85em;
+        }
+        .table th, 
+        .table td {
+            padding: 12px 15px;
+        }
+    }
+</style>
 <body>
     <!-- Header -->
     <?php include 'includes/header.php'; ?>

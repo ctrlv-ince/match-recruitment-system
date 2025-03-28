@@ -41,7 +41,7 @@ if (!$job) {
 $job_title = $job['title'];
 
 // Check if the candidate has been interviewed and recommended
-$sql = "SELECT interviews.interview_id, interviews.recommendation 
+$sql = "SELECT interviews.interview_id, interviews.recommendation, interviews.notes
         FROM interviews 
         JOIN applications ON interviews.application_id = applications.application_id 
         WHERE applications.seeker_id = ? AND applications.job_id = ? 
@@ -95,28 +95,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
     $stmt_app->bind_param("ii", $seeker_id, $job_id);
     $stmt_app->execute();
     $app_result = $stmt_app->get_result();
-    
+
     if ($app_result->num_rows > 0) {
         $app_data = $app_result->fetch_assoc();
         $application_id = $app_data['application_id'];
-        
+
         // Update application status to 'offered'
         $sql_update = "UPDATE applications SET status = 'offered' WHERE application_id = ?";
         $stmt_update = $conn->prepare($sql_update);
         $stmt_update->bind_param("i", $application_id);
         $stmt_update->execute();
-        
+
         // Insert the offer into the database with application_id
         $employer_id = $_SESSION['user_id']; // Get employer ID from session
         $sql = "INSERT INTO job_offers (application_id, employer_id, seeker_id, job_id, offer_details, salary, created_at) 
                 VALUES (?, ?, ?, ?, ?, ?, NOW())";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("iiiisd", $application_id, $employer_id, $seeker_id, $job_id, $offer_details, $salary);
-        
+
         if ($stmt->execute()) {
             $offer_sent = true; // Update flag to indicate offer has been sent
             $success_message = "Job offer sent successfully!";
-            
+
             // Add notification for the job seeker
             $sql_notify = "INSERT INTO notifications (user_id, message) VALUES (?, ?)";
             $stmt_notify = $conn->prepare($sql_notify);
@@ -134,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -148,43 +149,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             --text-muted: #666;
             --border-color: #e0e0e0;
         }
-        
+
         body {
             background-color: #f3f2ef;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         .navbar {
             background-color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             padding: 10px 0;
         }
-        
+
         .navbar-brand {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary-color);
         }
-        
+
         .navbar-brand span {
             color: #333;
         }
-        
+
         .page-header {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-        
+
         .card {
             border: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        
+
         .card-header {
             background-color: var(--primary-color);
             color: white;
@@ -192,17 +193,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             padding: 15px 20px;
             border-radius: 8px 8px 0 0 !important;
         }
-        
+
         .profile-header {
             display: flex;
             align-items: center;
             padding: 20px;
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-        
+
         .profile-image {
             width: 100px;
             height: 100px;
@@ -215,13 +216,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             font-size: 2.5rem;
             margin-right: 20px;
         }
-        
+
         .profile-details h3 {
             margin-bottom: 5px;
             color: #333;
             font-weight: 600;
         }
-        
+
         .profile-badge {
             background-color: rgba(10, 102, 194, 0.1);
             color: var(--secondary-color);
@@ -231,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             font-weight: 600;
             margin-right: 8px;
         }
-        
+
         .document-card {
             display: flex;
             align-items: center;
@@ -242,12 +243,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             border-left: 3px solid var(--primary-color);
             transition: all 0.2s ease;
         }
-        
+
         .document-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .document-icon {
             width: 40px;
             height: 40px;
@@ -259,17 +260,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             justify-content: center;
             margin-right: 15px;
         }
-        
+
         .document-details {
             flex-grow: 1;
         }
-        
+
         .document-title {
             font-weight: 600;
             margin-bottom: 2px;
             color: #333;
         }
-        
+
         .document-action {
             color: var(--secondary-color);
             text-decoration: none;
@@ -277,38 +278,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             display: flex;
             align-items: center;
         }
-        
+
         .document-action:hover {
             text-decoration: underline;
         }
-        
+
         .form-section {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        
+
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
-        
+
         .btn-primary:hover {
             background-color: #005d91;
             border-color: #005d91;
         }
-        
+
         .btn-outline-primary {
             color: var(--primary-color);
             border-color: var(--primary-color);
         }
-        
+
         .btn-outline-primary:hover {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .skill-badge {
             background-color: #e9f3ff;
             color: var(--secondary-color);
@@ -319,31 +320,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             display: inline-block;
             font-size: 0.85rem;
         }
-        
+
         .status-badge {
             padding: 5px 12px;
             border-radius: 20px;
             font-weight: 500;
             font-size: 0.85rem;
         }
-        
+
         .status-recommended {
             background-color: #e6f7e6;
             color: #2e7d32;
         }
-        
+
         .application-info {
             background-color: #f8f9fa;
             border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
         }
-        
+
         .application-info p {
             margin-bottom: 6px;
         }
     </style>
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
@@ -363,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
                     <li class="nav-item">
                         <a class="nav-link" href="notifications.php"><i class="fas fa-bell"></i> Notifications</a>
                     </li>
-                    
+
                     <li class="nav-item">
                         <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </li>
@@ -383,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             </div>
             <p class="text-muted mb-0">Job Position: <?php echo $job_title; ?></p>
         </div>
-        
+
         <!-- Success Message -->
         <?php if (isset($success_message)): ?>
             <div class="alert alert-success mt-3">
@@ -408,9 +410,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
                     <div class="card-body">
                         <div class="text-center mb-4">
                             <div class="profile-image mx-auto">
-                                <?php 
-                                    $initials = strtoupper(substr($candidate['full_name'], 0, 1));
-                                    echo $initials;
+                                <?php
+                                $initials = strtoupper(substr($candidate['full_name'], 0, 1));
+                                echo $initials;
                                 ?>
                             </div>
                             <h4 class="mt-3"><?php echo $candidate['full_name']; ?></h4>
@@ -418,30 +420,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
                                 <i class="fas fa-envelope me-2"></i><?php echo $candidate['email']; ?>
                             </p>
                         </div>
-                        
+
                         <div class="mb-4">
                             <h6 class="text-uppercase text-muted mb-3">Skills</h6>
                             <div>
-                                <?php 
-                                    $skills = explode(',', $candidate['skills']);
-                                    foreach ($skills as $skill) {
-                                        echo '<span class="skill-badge">' . trim($skill) . '</span>';
-                                    }
+                                <?php
+                                $skills = explode(',', $candidate['skills']);
+                                foreach ($skills as $skill) {
+                                    echo '<span class="skill-badge">' . trim($skill) . '</span>';
+                                }
                                 ?>
                             </div>
                         </div>
-                        
+
                         <?php if (isset($application)): ?>
-                        <div class="application-info">
-                            <h6 class="text-uppercase text-muted mb-3">Application Info</h6>
-                            <p><strong>Status:</strong> <?php echo ucfirst($application['status']); ?></p>
-                            <p><strong>Applied On:</strong> <?php echo date('M d, Y', strtotime($application['applied_at'])); ?></p>
-                        </div>
+                            <div class="application-info">
+                                <h6 class="text-uppercase text-muted mb-3">Application Info</h6>
+                                <p><strong>Status:</strong> Recommended by Agency</p>
+                                <p><strong>Applied On:</strong> <?php echo date('M d, Y', strtotime($application['applied_at'])); ?></p>
+                                <?php if (!empty($interview['notes'])): ?>
+                                    <p><strong>Interview Notes:</strong> <?php echo htmlspecialchars($interview['notes']); ?></p>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Documents and Offer Form -->
             <div class="col-md-8">
                 <!-- Documents -->
@@ -454,16 +459,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
                             <?php foreach ($documents as $document): ?>
                                 <div class="document-card">
                                     <div class="document-icon">
-                                        <?php 
-                                            if ($document['document_type'] == 'resume') {
-                                                echo '<i class="fas fa-file-alt"></i>';
-                                            } elseif ($document['document_type'] == 'cover_letter') {
-                                                echo '<i class="fas fa-file-word"></i>';
-                                            } elseif ($document['document_type'] == 'certification') {
-                                                echo '<i class="fas fa-certificate"></i>';
-                                            } else {
-                                                echo '<i class="fas fa-file"></i>';
-                                            }
+                                        <?php
+                                        if ($document['document_type'] == 'resume') {
+                                            echo '<i class="fas fa-file-alt"></i>';
+                                        } elseif ($document['document_type'] == 'cover_letter') {
+                                            echo '<i class="fas fa-file-word"></i>';
+                                        } elseif ($document['document_type'] == 'certification') {
+                                            echo '<i class="fas fa-certificate"></i>';
+                                        } else {
+                                            echo '<i class="fas fa-file"></i>';
+                                        }
                                         ?>
                                     </div>
                                     <div class="document-details">
@@ -488,7 +493,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
                         <?php endif; ?>
                     </div>
                 </div>
-                
+
                 <!-- Send Job Offer Form -->
                 <?php if (!$offer_sent): ?>
                     <div class="card mt-4">
@@ -499,12 +504,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
                             <form action="" method="POST">
                                 <input type="hidden" name="seeker_id" value="<?php echo $seeker_id; ?>">
                                 <input type="hidden" name="job_id" value="<?php echo $job_id; ?>">
-                                
+
                                 <div class="mb-3">
                                     <label for="offer_details" class="form-label">Offer Details</label>
                                     <textarea class="form-control" id="offer_details" name="offer_details" rows="5" placeholder="Describe the job offer details, including position, start date, benefits, and any other relevant information..." required></textarea>
                                 </div>
-                                
+
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="salary" class="form-label">Salary (Monthly)</label>
@@ -514,7 +519,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="d-flex gap-2">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-paper-plane me-1"></i> Send Offer
@@ -534,7 +539,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
             </div>
         </div>
     </div>
-    
+
     <!-- Footer -->
     <footer class="bg-white mt-5 py-4 border-top">
         <div class="container">
@@ -549,4 +554,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$offer_sent) {
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

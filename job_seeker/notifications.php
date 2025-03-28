@@ -286,7 +286,7 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
                                             <i class="fas fa-reply me-1"></i> Respond to Offer
                                         </a>
                                     <?php else: ?>
-                                        <p class="text-danger mt-2">Error: Offer ID not found.</p>
+                                        <!-- <p class="text-danger mt-2">Error: Offer ID not found.</p> -->
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>

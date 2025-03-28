@@ -322,6 +322,7 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
                 </div>
             </div>
 
+            <!-- Inside the action-buttons div, add this new button -->
             <div class="action-buttons">
                 <a href="search_jobs.php" class="btn action-btn primary-btn">
                     <i class="fas fa-search"></i> Find Jobs
@@ -339,7 +340,11 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
                     <i class="fas fa-calendar-check"></i> Interviews
                 </a>
                 <a href="view_applications.php" class="btn action-btn outline-btn">
-                    <i class="fas fa-file-alt"></i></i> Applications
+                    <i class="fas fa-file-alt"></i> Applications
+                </a>
+                <!-- Add this new button for Job Offers -->
+                <a href="applicant_offers.php" class="btn action-btn outline-btn">
+                    <i class="fas fa-handshake"></i> Job Offers
                 </a>
             </div>
         </div>

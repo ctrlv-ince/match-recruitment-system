@@ -32,28 +32,28 @@ $user = $result->fetch_assoc();
             --text-dark: #333;
             --text-light: #666;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--secondary-color);
             color: var(--text-dark);
         }
-        
+
         .navbar {
             background-color: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         .navbar-brand {
             font-weight: bold;
             color: var(--primary-color);
         }
-        
+
         .dashboard-container {
             max-width: 1200px;
             margin: 30px auto;
         }
-        
+
         .profile-card {
             background-color: white;
             border-radius: 8px;
@@ -62,7 +62,7 @@ $user = $result->fetch_assoc();
             margin-bottom: 20px;
             border-left: 4px solid var(--primary-color);
         }
-        
+
         .dashboard-card {
             background-color: white;
             border-radius: 8px;
@@ -70,60 +70,60 @@ $user = $result->fetch_assoc();
             margin-bottom: 20px;
             overflow: hidden;
         }
-        
+
         .dashboard-card-header {
             padding: 15px 20px;
             border-bottom: 1px solid var(--border-color);
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .dashboard-card-body {
             padding: 20px;
         }
-        
+
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
-        
+
         .btn-primary:hover {
             background-color: #0b5ed7;
             border-color: #0b5ed7;
         }
-        
+
         .btn-outline-primary {
             color: var(--primary-color);
             border-color: var(--primary-color);
         }
-        
+
         .btn-outline-primary:hover {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .accordion-button:not(.collapsed) {
             background-color: rgba(10, 102, 194, 0.1);
             color: var(--primary-color);
         }
-        
+
         .accordion-button:focus {
             box-shadow: none;
             border-color: rgba(10, 102, 194, 0.25);
         }
-        
+
         .job-card {
             border: 1px solid var(--border-color);
             border-radius: 8px;
             margin-bottom: 15px;
             transition: all 0.3s ease;
         }
-        
+
         .job-card:hover {
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
         }
-        
+
         .job-card-header {
             padding: 15px;
             border-bottom: 1px solid var(--border-color);
@@ -132,26 +132,26 @@ $user = $result->fetch_assoc();
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .job-card-body {
             padding: 15px;
         }
-        
+
         .badge {
             font-weight: 500;
             padding: 5px 10px;
         }
-        
+
         .table {
             border-collapse: separate;
             border-spacing: 0;
         }
-        
+
         .table th {
             background-color: rgba(10, 102, 194, 0.05);
             border-color: var(--border-color);
         }
-        
+
         .stats-box {
             background-color: white;
             border-radius: 8px;
@@ -160,38 +160,38 @@ $user = $result->fetch_assoc();
             text-align: center;
             margin-bottom: 20px;
         }
-        
+
         .stats-number {
             font-size: 24px;
             font-weight: bold;
             color: var(--primary-color);
         }
-        
+
         .stats-label {
             color: var(--text-light);
             font-size: 14px;
         }
-        
+
         .action-btn {
             border-radius: 20px;
             padding: 5px 15px;
             margin-right: 5px;
         }
-        
+
         .sidebar {
             position: sticky;
             top: 20px;
         }
-        
+
         .sidebar-nav {
             list-style: none;
             padding: 0;
         }
-        
+
         .sidebar-nav li {
             margin-bottom: 10px;
         }
-        
+
         .sidebar-nav a {
             display: block;
             padding: 10px 15px;
@@ -202,12 +202,13 @@ $user = $result->fetch_assoc();
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-        
-        .sidebar-nav a:hover, .sidebar-nav a.active {
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .sidebar-nav i {
             margin-right: 10px;
         }
@@ -251,7 +252,9 @@ $user = $result->fetch_assoc();
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
                             <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                         </ul>
                     </li>
@@ -277,14 +280,14 @@ $user = $result->fetch_assoc();
                             </div>
                         </div>
                     </div>
-                    
+
                     <ul class="sidebar-nav mb-4">
                         <li><a href="#" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                         <li><a href="post_job.php"><i class="fas fa-plus-circle"></i> Post New Job</a></li>
                         <li><a href="notifications.php"><i class="fas fa-bell"></i> Notifications</a></li>
                         <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     </ul>
-                    
+
                     <div class="stats-box">
                         <div class="stats-number">
                             <?php
@@ -296,7 +299,7 @@ $user = $result->fetch_assoc();
                         </div>
                         <div class="stats-label">Active Jobs</div>
                     </div>
-                    
+
                     <div class="stats-box">
                         <div class="stats-number">
                             <?php
@@ -312,7 +315,7 @@ $user = $result->fetch_assoc();
                     </div>
                 </div>
             </div>
-            
+
             <!-- Main Content Area -->
             <div class="col-lg-9">
                 <!-- Job Postings Section -->
@@ -393,30 +396,30 @@ $user = $result->fetch_assoc();
                                                                         <i class='fas fa-users me-1'></i> Quota: {$quota}
                                                                     </div>
                                                                 </div>";
-                                                                
-                                                                // Show a message if the quota is met
-                                                                if ($quota <= 0) {
-                                                                    echo "<div class='alert alert-danger mt-3'>
+
+                                // Show a message if the quota is met
+                                if ($quota <= 0) {
+                                    echo "<div class='alert alert-danger mt-3'>
                                                                         <i class='fas fa-exclamation-triangle me-2'></i> This job is no longer accepting applications.
                                                                     </div>";
-                                                                }
-                                                        echo "</div>
+                                }
+                                echo "</div>
                                                         </div>
                                                     </div>
                                                     
                                                     <!-- Shortlisted Candidates Tab -->
                                                     <div class='tab-pane fade' id='shortlisted{$job_id}' role='tabpanel' aria-labelledby='shortlisted-tab{$job_id}'>
                                                         <h6 class='mb-3'><i class='fas fa-user-check me-2'></i>Shortlisted Candidates</h6>";
-                                                        
-                                                        // Fetch shortlisted candidates for this job posting
-                                                        $sql_candidates = "SELECT applications.application_id, applications.seeker_id, users.full_name, users.email 
+
+                                // Fetch shortlisted candidates for this job posting
+                                $sql_candidates = "SELECT applications.application_id, applications.seeker_id, users.full_name, users.email 
                                                                           FROM applications 
                                                                           JOIN users ON applications.seeker_id = users.user_id 
                                                                           WHERE applications.job_id = $job_id AND applications.status = 'shortlisted'";
-                                                        $candidates_result = $conn->query($sql_candidates);
+                                $candidates_result = $conn->query($sql_candidates);
 
-                                                        if ($candidates_result->num_rows > 0) {
-                                                            echo "<div class='table-responsive'>
+                                if ($candidates_result->num_rows > 0) {
+                                    echo "<div class='table-responsive'>
                                                                 <table class='table table-hover'>
                                                                     <thead>
                                                                         <tr>
@@ -426,8 +429,8 @@ $user = $result->fetch_assoc();
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>";
-                                                            while ($candidate = $candidates_result->fetch_assoc()) {
-                                                                echo "<tr>
+                                    while ($candidate = $candidates_result->fetch_assoc()) {
+                                        echo "<tr>
                                                                         <td>
                                                                             <div class='d-flex align-items-center'>
                                                                                 <div class='bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2' style='width: 32px; height: 32px;'>
@@ -443,33 +446,33 @@ $user = $result->fetch_assoc();
                                                                             </a>
                                                                         </td>
                                                                     </tr>";
-                                                            }
-                                                            echo "</tbody></table>
+                                    }
+                                    echo "</tbody></table>
                                                             </div>";
-                                                        } else {
-                                                            echo "<div class='alert alert-info'>
+                                } else {
+                                    echo "<div class='alert alert-info'>
                                                                 <i class='fas fa-info-circle me-2'></i> No shortlisted candidates for this job yet.
                                                             </div>";
-                                                        }
-                                                        
-                                                    echo "</div>
+                                }
+
+                                echo "</div>
                                                     
                                                     <!-- Recommended Candidates Tab -->
                                                     <div class='tab-pane fade' id='recommended{$job_id}' role='tabpanel' aria-labelledby='recommended-tab{$job_id}'>
                                                         <h6 class='mb-3'><i class='fas fa-thumbs-up me-2'></i>Interviewed and Recommended Candidates</h6>";
-                                                        
-                                                        // Fetch interviewed and recommended candidates for this job posting
-                                                        $sql_interviewed = "SELECT applications.application_id, applications.seeker_id, users.full_name, users.email 
+
+                                // Fetch interviewed and recommended candidates for this job posting
+                                $sql_interviewed = "SELECT applications.application_id, applications.seeker_id, users.full_name, users.email 
                                                                           FROM applications 
                                                                           JOIN users ON applications.seeker_id = users.user_id 
                                                                           JOIN interviews ON applications.application_id = interviews.application_id 
                                                                           WHERE applications.job_id = $job_id 
                                                                           AND interviews.status = 'completed' 
                                                                           AND interviews.recommendation = 'recommended'";
-                                                        $interviewed_result = $conn->query($sql_interviewed);
+                                $interviewed_result = $conn->query($sql_interviewed);
 
-                                                        if ($interviewed_result->num_rows > 0) {
-                                                            echo "<div class='table-responsive'>
+                                if ($interviewed_result->num_rows > 0) {
+                                    echo "<div class='table-responsive'>
                                                                 <table class='table table-hover'>
                                                                     <thead>
                                                                         <tr>
@@ -479,8 +482,8 @@ $user = $result->fetch_assoc();
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>";
-                                                            while ($candidate = $interviewed_result->fetch_assoc()) {
-                                                                echo "<tr>
+                                    while ($candidate = $interviewed_result->fetch_assoc()) {
+                                        echo "<tr>
                                                                         <td>
                                                                             <div class='d-flex align-items-center'>
                                                                                 <div class='bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2' style='width: 32px; height: 32px;'>
@@ -496,16 +499,16 @@ $user = $result->fetch_assoc();
                                                                             </a>
                                                                         </td>
                                                                     </tr>";
-                                                            }
-                                                            echo "</tbody></table>
+                                    }
+                                    echo "</tbody></table>
                                                             </div>";
-                                                        } else {
-                                                            echo "<div class='alert alert-info'>
+                                } else {
+                                    echo "<div class='alert alert-info'>
                                                                 <i class='fas fa-info-circle me-2'></i> No interviewed and recommended candidates for this job yet.
                                                             </div>";
-                                                        }
-                                                        
-                                                    echo "</div>
+                                }
+
+                                echo "</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -545,7 +548,7 @@ $user = $result->fetch_assoc();
                                 $status = $offer['status'];
                                 $status_badge = ($status === 'pending') ? 'warning' : (($status === 'accepted') ? 'success' : (($status === 'declined') ? 'danger' : (($status === 'expired') ? 'secondary' : 'primary')));
                                 $status_icon = ($status === 'pending') ? 'clock' : (($status === 'accepted') ? 'check-circle' : (($status === 'declined') ? 'times-circle' : (($status === 'expired') ? 'calendar-xmark' : 'info-circle')));
-                                
+
                                 echo "
                                 <div class='job-card'>
                                     <div class='job-card-header'>
@@ -573,27 +576,32 @@ $user = $result->fetch_assoc();
                                                 </p>
                                             </div>
                                             <div class='col-md-4 text-md-end mt-3 mt-md-0'>";
-                                                
-                                                // Show actions based on offer status
-                                                if ($status === 'pending') {
-                                                    echo "<a href='view_candidate_details.php?seeker_id={$offer['seeker_id']}&job_id={$offer['job_id']}' class='btn btn-sm btn-primary'>
+
+                                // Show actions based on offer status
+                                if ($status === 'pending') {
+                                    echo "<a href='view_candidate_details.php?seeker_id={$offer['seeker_id']}&job_id={$offer['job_id']}' class='btn btn-sm btn-primary'>
                                                         <i class='fas fa-eye me-1'></i> View Candidate
                                                     </a>";
-                                                } elseif ($status === 'accepted') {
-                                                    echo "<div class='alert alert-success py-2 px-3 mb-0'>
-                                                        <i class='fas fa-check-circle me-1'></i> Offer accepted
+                                } elseif ($status === 'accepted') {
+                                    echo "<div class='d-flex flex-column gap-2'>
+                                                        <div class='alert alert-success py-2 px-3 mb-0'>
+                                                            <i class='fas fa-check-circle me-1'></i> Offer accepted
+                                                        </div>
+                                                        <a href='feedback.php' class='btn btn-sm btn-success'>
+                                                            <i class='fas fa-comment me-1'></i> Provide Feedback
+                                                        </a>
                                                     </div>";
-                                                } elseif ($status === 'declined') {
-                                                    echo "<div class='alert alert-danger py-2 px-3 mb-0'>
+                                } elseif ($status === 'declined') {
+                                    echo "<div class='alert alert-danger py-2 px-3 mb-0'>
                                                         <i class='fas fa-times-circle me-1'></i> Offer declined
                                                     </div>";
-                                                } elseif ($status === 'expired') {
-                                                    echo "<div class='alert alert-secondary py-2 px-3 mb-0'>
+                                } elseif ($status === 'expired') {
+                                    echo "<div class='alert alert-secondary py-2 px-3 mb-0'>
                                                         <i class='fas fa-calendar-times me-1'></i> Offer expired
                                                     </div>";
-                                                }
-                                                
-                                            echo "</div>
+                                }
+
+                                echo "</div>
                                         </div>
                                     </div>
                                 </div>";
@@ -606,7 +614,7 @@ $user = $result->fetch_assoc();
                         ?>
                     </div>
                 </div>
-                
+
                 <!-- Quick Actions Section -->
                 <div class="row mt-4">
                     <div class="col-md-6">
@@ -644,14 +652,14 @@ $user = $result->fetch_assoc();
                                 // Get some quick stats
                                 $sql_total_jobs = "SELECT COUNT(*) as total FROM job_postings WHERE employer_id = $user_id";
                                 $total_jobs = $conn->query($sql_total_jobs)->fetch_assoc()['total'];
-                                
+
                                 $sql_total_offers = "SELECT COUNT(*) as total FROM job_offers WHERE employer_id = $user_id";
                                 $total_offers = $conn->query($sql_total_offers)->fetch_assoc()['total'];
-                                
+
                                 $sql_accepted_offers = "SELECT COUNT(*) as total FROM job_offers WHERE employer_id = $user_id AND status = 'accepted'";
                                 $accepted_offers = $conn->query($sql_accepted_offers)->fetch_assoc()['total'];
                                 ?>
-                                
+
                                 <div class="row text-center">
                                     <div class="col-4">
                                         <div class="p-3">

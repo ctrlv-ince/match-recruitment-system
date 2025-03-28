@@ -30,6 +30,122 @@ $shortlisted_result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../css/styles.css" rel="stylesheet">
 </head>
+<style>
+    /* Improved table styles */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .table thead th {
+        background-color: #0a66c2;
+        color: white;
+        font-weight: 500;
+        border-bottom: none;
+        padding: 12px 15px;
+        position: sticky;
+        top: 0;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+        background-color: white;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(10, 102, 194, 0.05);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .table td,
+    .table th {
+        border-right: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+
+    .table td:first-child,
+    .table th:first-child {
+        border-left: 1px solid #e0e0e0;
+    }
+
+    .table tr:first-child th:first-child {
+        border-top-left-radius: 8px;
+    }
+
+    .table tr:first-child th:last-child {
+        border-top-right-radius: 8px;
+    }
+
+    .table tr:last-child td:first-child {
+        border-bottom-left-radius: 8px;
+    }
+
+    .table tr:last-child td:last-child {
+        border-bottom-right-radius: 8px;
+    }
+
+    /* Button styles */
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background-color: #0a66c2;
+        border-color: #0a66c2;
+    }
+
+    .btn-primary:hover {
+        background-color: #0957a8;
+        border-color: #0957a8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Modal styles */
+    .modal-content {
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        background-color: #0a66c2;
+        color: white;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .modal-title {
+        font-weight: 500;
+    }
+
+    /* Form styles */
+    .form-control {
+        padding: 8px 12px;
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+    }
+
+    .form-control:focus {
+        border-color: #0a66c2;
+        box-shadow: 0 0 0 0.25rem rgba(10, 102, 194, 0.25);
+    }
+
+    /* Empty state style */
+    .table tbody tr td[colspan] {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
+    }
+</style>
 
 <body>
     <!-- Header -->

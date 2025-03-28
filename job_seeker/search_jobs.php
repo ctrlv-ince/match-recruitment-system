@@ -21,24 +21,45 @@ $seeker_data = $result->fetch_assoc();
 $seeker_skills = $seeker_data['skills'];
 $seeker_location = $seeker_data['location'];
 
+// Helper function to check skill matches
+function getSkillMatchPercentage($seekerSkills, $jobSkills)
+{
+    if (empty($seekerSkills) || empty($jobSkills)) {
+        return 0;
+    }
+
+    // Convert skills strings to arrays
+    $seekerSkillsArray = array_map('trim', explode(',', strtolower($seekerSkills)));
+    $jobSkillsArray = array_map('trim', explode(',', strtolower($jobSkills)));
+
+    // Count matching skills
+    $matchingSkills = array_intersect($seekerSkillsArray, $jobSkillsArray);
+    $matchCount = count($matchingSkills);
+    $jobSkillCount = count($jobSkillsArray);
+
+    // Calculate match percentage
+    return $jobSkillCount > 0 ? round(($matchCount / $jobSkillCount) * 100) : 0;
+}
+
 // Helper function to check if locations are in the same area
-function areLocationsNearby($location1, $location2) {
+function areLocationsNearby($location1, $location2)
+{
     // Convert to lowercase for case-insensitive comparison
     $loc1 = strtolower($location1);
     $loc2 = strtolower($location2);
-    
+
     // Exact match
     if ($loc1 === $loc2) {
         return true;
     }
-    
+
     // Extract city names and areas
     $loc1_parts = preg_split('/[,\s]+/', $loc1);
     $loc2_parts = preg_split('/[,\s]+/', $loc2);
-    
+
     // Check for common city names or areas
     $common_parts = array_intersect($loc1_parts, $loc2_parts);
-    
+
     // If there are at least 2 common parts, consider them nearby
     // This will match cases like "Lower Bicutan, Taguig City" and "Western Bicutan, Taguig City"
     return count($common_parts) >= 2;
@@ -47,17 +68,14 @@ function areLocationsNearby($location1, $location2) {
 // Fetch approved jobs that match the search term, skills, and location
 $sql = "SELECT *, 
         CASE 
-            WHEN skills LIKE '%$seeker_skills%' THEN 1 
-            ELSE 0 
-        END AS skill_match,
-        CASE 
             WHEN location = '$seeker_location' THEN 1 
             ELSE 0 
         END AS location_match 
         FROM job_postings 
         WHERE status = 'approved' AND quota > 0 AND (title LIKE '%$search%' OR skills LIKE '%$search%') 
-        ORDER BY location_match DESC, skill_match DESC, title ASC";
+        ORDER BY location_match DESC, title ASC";
 $result = $conn->query($sql);
+
 // Fetch the number of unread notifications
 $sql = "SELECT COUNT(*) AS unread_count FROM notifications WHERE user_id = $user_id AND status = 'unread'";
 $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
@@ -209,7 +227,6 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
 </head>
 
 <body>
-    <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
             <a class="navbar-brand brand-logo" href="dashboard.php">
@@ -274,6 +291,8 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
         <?php
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
+                $matchPercentage = getSkillMatchPercentage($seeker_skills, $row['skills']);
+
                 echo "<div class='card mb-3'>";
                 echo "<div class='card-body'>";
                 echo "<h5 class='card-title'>{$row['title']}</h5>";
@@ -281,14 +300,31 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
                 echo "<div class='job-detail'><i class='fas fa-clipboard-list'></i><p class='card-text'><strong>Requirements:</strong> {$row['requirements']}</p></div>";
                 echo "<div class='job-detail'><i class='fas fa-tools'></i><p class='card-text'><strong>Skills:</strong> {$row['skills']}</p></div>";
                 echo "<div class='job-detail'><i class='fas fa-map-marker-alt'></i><p class='card-text'><strong>Location:</strong> {$row['location']}</p></div>";
-                if (!empty($seeker_skills) && strpos($row['skills'], $seeker_skills) !== false) {
-                    echo "<p class='text-success'><i class='fas fa-check-circle'></i>This job matches your skills!</p>";
+
+                // Skill matching feedback
+                if ($matchPercentage > 0) {
+                    if ($matchPercentage == 100) {
+                        echo "<p class='text-success'><i class='fas fa-check-circle'></i> Your skills perfectly match all required skills!</p>";
+                    } elseif ($matchPercentage >= 75) {
+                        echo "<p class='text-success'><i class='fas fa-check-circle'></i> Your skills match most of the required skills ($matchPercentage% match)!</p>";
+                    } elseif ($matchPercentage >= 50) {
+                        echo "<p class='text-warning'><i class='fas fa-check-circle'></i> Your skills match some of the required skills ($matchPercentage% match)</p>";
+                    } else {
+                        echo "<p class='text-info'><i class='fas fa-info-circle'></i> Your skills partially match the required skills ($matchPercentage% match)</p>";
+                    }
+                } else {
+                    echo "<p class='text-muted'><i class='fas fa-info-circle'></i> Your skills don't match the required skills</p>";
                 }
+
+                // Location matching feedback
                 if ($row['location'] === $seeker_location) {
-                    echo "<p class='text-success'><i class='fas fa-check-circle'></i>This job is in your location!</p>";
+                    echo "<p class='text-success'><i class='fas fa-check-circle'></i>This job is in your exact location!</p>";
                 } elseif (areLocationsNearby($row['location'], $seeker_location)) {
                     echo "<p class='text-success'><i class='fas fa-check-circle'></i>This job is near your location!</p>";
+                } else {
+                    echo "<p class='text-muted'><i class='fas fa-info-circle'></i>This job is in a different location</p>";
                 }
+
                 echo "<a href='view_job.php?id={$row['job_id']}' class='btn btn-primary'>
                     <i class='fas fa-eye'></i>View Details
                 </a>";
@@ -304,7 +340,6 @@ $unread_count = $conn->query($sql)->fetch_assoc()['unread_count'];
         </a>
     </div>
 </body>
-<!-- Footer -->
 <footer class="footer mt-auto">
     <div class="container">
         <div class="row">

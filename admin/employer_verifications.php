@@ -31,6 +31,153 @@ $interviews_result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../css/styles.css" rel="stylesheet">
 </head>
+<style>
+    /* Employer Verification Table Styling */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        background: white;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: #2c3e50;
+        color: white;
+        font-weight: 500;
+        padding: 16px 20px;
+        border: none;
+        position: sticky;
+        top: 0;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f1f9ff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .table td {
+        padding: 14px 20px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: top;
+    }
+
+    /* Document List Styling */
+    .table td ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .table td ul li {
+        padding: 6px 0;
+        border-bottom: 1px dashed #e0e0e0;
+    }
+
+    .table td ul li:last-child {
+        border-bottom: none;
+    }
+
+    .table td ul li a {
+        color: #3498db;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .table td ul li a:hover {
+        color: #1a5276;
+        text-decoration: underline;
+    }
+
+    .table td ul li a i {
+        margin-right: 6px;
+        font-size: 0.9em;
+    }
+
+    /* Button Styling */
+    .table .btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        margin: 4px;
+        min-width: 90px;
+        text-align: center;
+    }
+
+    .table .btn-success {
+        background: #27ae60;
+        border-color: #27ae60;
+    }
+
+    .table .btn-success:hover {
+        background: #219653;
+        border-color: #1e8449;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+    }
+
+    .table .btn-danger {
+        background: #e74c3c;
+        border-color: #e74c3c;
+    }
+
+    .table .btn-danger:hover {
+        background: #c0392b;
+        border-color: #b03a2e;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
+    }
+
+    /* Empty State Styling */
+    .table td[colspan] {
+        text-align: center;
+        color: #7f8c8d;
+        font-style: italic;
+        padding: 30px;
+        background: #f9f9f9;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .table thead th {
+            padding: 12px 15px;
+            font-size: 0.8em;
+        }
+
+        .table td {
+            padding: 10px 12px;
+            font-size: 0.9em;
+        }
+
+        .table .btn {
+            padding: 6px 10px;
+            font-size: 0.8em;
+            min-width: 80px;
+            margin: 2px;
+            display: block;
+            width: 100%;
+        }
+    }
+</style>
 
 <body>
     <!-- Header -->

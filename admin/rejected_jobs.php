@@ -31,6 +31,112 @@ $interviews_result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../css/styles.css" rel="stylesheet">
 </head>
+<style>
+    /* Table styling */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        background-color: white;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .table thead th {
+        background-color: #dc3545;
+        /* Red header for rejected items */
+        color: white;
+        font-weight: 500;
+        padding: 15px;
+        position: sticky;
+        top: 0;
+        border: none;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(220, 53, 69, 0.05);
+        /* Light red hover */
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .table td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    /* Status styling */
+    .table td:nth-child(5) {
+        text-transform: capitalize;
+        font-weight: 500;
+        color: #dc3545;
+        /* Red color for rejected status */
+    }
+
+    /* Button styling */
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .btn-danger:hover {
+        background-color: #bb2d3b;
+        border-color: #b02a37;
+        transform: translateY(-1px);
+    }
+
+    /* Text content styling */
+    .table td:nth-child(3),
+    .table td:nth-child(4) {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .table td:nth-child(3):hover,
+    .table td:nth-child(4):hover {
+        white-space: normal;
+        overflow: visible;
+        position: relative;
+        z-index: 1;
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Empty state */
+    .table tbody tr td[colspan] {
+        text-align: center;
+        color: #6c757d;
+        padding: 30px;
+        font-style: italic;
+    }
+
+    /* Action column styling */
+    .table td:last-child {
+        white-space: nowrap;
+    }
+
+    /* Header styling */
+    .border-bottom h2 {
+        color: #dc3545;
+        /* Red color for "Rejected Jobs" header */
+    }
+</style>
 
 <body>
     <!-- Header -->
