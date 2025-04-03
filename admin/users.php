@@ -8,6 +8,37 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
+// Get sort parameters
+$sort_column = isset($_GET['sort']) ? $_GET['sort'] : 'created_at';
+$sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+
+// Validate sort column to prevent SQL injection
+$allowed_columns = ['full_name', 'email', 'user_type', 'status', 'created_at'];
+if (!in_array($sort_column, $allowed_columns)) {
+    $sort_column = 'created_at';
+}
+
+// Validate sort order
+if ($sort_order != 'ASC' && $sort_order != 'DESC') {
+    $sort_order = 'DESC';
+}
+
+// Helper function to generate sort URL
+function getSortUrl($column, $currentSort, $currentOrder) {
+    $newOrder = ($currentSort === $column && $currentOrder === 'ASC') ? 'DESC' : 'ASC';
+    return "?sort=" . $column . "&order=" . $newOrder;
+}
+
+// Helper function to display sort indicator
+function getSortIndicator($column, $currentSort, $currentOrder) {
+    if ($currentSort !== $column) {
+        return '<i class="bi bi-arrow-down-up text-muted"></i>';
+    }
+    return ($currentOrder === 'ASC') ? 
+        '<i class="bi bi-sort-down-alt"></i>' : 
+        '<i class="bi bi-sort-down"></i>';
+}
+
 // Fetch scheduled interviews
 $sql = "SELECT interviews.interview_id, interviews.scheduled_date, interviews.status, 
                users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
@@ -138,6 +169,35 @@ $interviews_result = $conn->query($sql);
         color: #6c757d;
         font-size: 0.9rem;
     }
+    
+    /* Sortable header styles */
+    .sortable {
+        cursor: pointer;
+        position: relative;
+        padding-right: 25px !important;
+    }
+
+    .sortable:hover {
+        background-color: #0857a2;
+    }
+
+    .sortable i {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Highlight the active sort column */
+    .sort-active {
+        background-color: #0857a2;
+    }
+    
+    /* Make sure links in headers are white and no underline */
+    .sortable a {
+        color: white;
+        text-decoration: none;
+    }
 </style>
 
 <body>
@@ -157,17 +217,33 @@ $interviews_result = $conn->query($sql);
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>User Type</th>
-                                <th>Status</th>
+                                <th class="sortable <?php echo $sort_column === 'full_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('full_name', $sort_column, $sort_order); ?>">
+                                        Name <?php echo getSortIndicator('full_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'email' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('email', $sort_column, $sort_order); ?>">
+                                        Email <?php echo getSortIndicator('email', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'user_type' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('user_type', $sort_column, $sort_order); ?>">
+                                        User Type <?php echo getSortIndicator('user_type', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'status' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('status', $sort_column, $sort_order); ?>">
+                                        Status <?php echo getSortIndicator('status', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-                            // Fetch all users
-                            $sql = "SELECT * FROM users ORDER BY created_at DESC";
+                            // Fetch all users with sorting
+                            $sql = "SELECT * FROM users ORDER BY $sort_column $sort_order";
                             $users_result = $conn->query($sql);
 
                             if ($users_result->num_rows > 0) {
@@ -194,6 +270,10 @@ $interviews_result = $conn->query($sql);
         </div>
     </div>
 
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Add color coding for status cells
         document.addEventListener('DOMContentLoaded', function() {
@@ -212,3 +292,5 @@ $interviews_result = $conn->query($sql);
             });
         });
     </script>
+</body>
+</html>

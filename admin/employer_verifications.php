@@ -8,6 +8,37 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
+// Get sort parameters
+$sort_column = isset($_GET['sort']) ? $_GET['sort'] : 'full_name';
+$sort_order = isset($_GET['order']) ? $_GET['order'] : 'ASC';
+
+// Validate sort column to prevent SQL injection
+$allowed_columns = ['full_name', 'company_name'];
+if (!in_array($sort_column, $allowed_columns)) {
+    $sort_column = 'full_name';
+}
+
+// Validate sort order
+if ($sort_order != 'ASC' && $sort_order != 'DESC') {
+    $sort_order = 'ASC';
+}
+
+// Helper function to generate sort URL
+function getSortUrl($column, $currentSort, $currentOrder) {
+    $newOrder = ($currentSort === $column && $currentOrder === 'ASC') ? 'DESC' : 'ASC';
+    return "?sort=" . $column . "&order=" . $newOrder;
+}
+
+// Helper function to display sort indicator
+function getSortIndicator($column, $currentSort, $currentOrder) {
+    if ($currentSort !== $column) {
+        return '<i class="bi bi-arrow-down-up text-muted"></i>';
+    }
+    return ($currentOrder === 'ASC') ? 
+        '<i class="bi bi-sort-down-alt"></i>' : 
+        '<i class="bi bi-sort-down"></i>';
+}
+
 // Fetch scheduled interviews
 $sql = "SELECT interviews.interview_id, interviews.scheduled_date, interviews.status, 
                users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
@@ -177,6 +208,29 @@ $interviews_result = $conn->query($sql);
             width: 100%;
         }
     }
+    
+    /* Sortable header styles */
+    .sortable {
+        cursor: pointer;
+        position: relative;
+        padding-right: 25px !important;
+    }
+
+    .sortable:hover {
+        background-color: #1a2530;
+    }
+
+    .sortable i {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Highlight the active sort column */
+    .sort-active {
+        background-color: #1a2530;
+    }
 </style>
 
 <body>
@@ -196,21 +250,30 @@ $interviews_result = $conn->query($sql);
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Company</th>
+                                <th class="sortable <?php echo $sort_column === 'full_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('full_name', $sort_column, $sort_order); ?>" class="text-white text-decoration-none">
+                                        Name <?php echo getSortIndicator('full_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'company_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('company_name', $sort_column, $sort_order); ?>" class="text-white text-decoration-none">
+                                        Company <?php echo getSortIndicator('company_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
                                 <th>Documents</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-                            // Fetch pending employers and their documents
+                            // Fetch pending employers and their documents with sorting
                             $sql = "SELECT users.user_id, users.full_name, employers.company_name, 
                        employer_documents.document_type, employer_documents.document_path
                 FROM users
                 JOIN employers ON users.user_id = employers.employer_id
                 LEFT JOIN employer_documents ON employers.employer_id = employer_documents.employer_id
-                WHERE users.user_type = 'employer' AND users.status = 'pending'";
+                WHERE users.user_type = 'employer' AND users.status = 'pending'
+                ORDER BY $sort_column $sort_order";
                             $employers_result = $conn->query($sql);
 
                             if ($employers_result->num_rows > 0) {
@@ -254,3 +317,7 @@ $interviews_result = $conn->query($sql);
 
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

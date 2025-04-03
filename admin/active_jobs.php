@@ -8,6 +8,21 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
+// Get sort parameters
+$sort_column = isset($_GET['sort']) ? $_GET['sort'] : 'created_at';
+$sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+
+// Validate sort column to prevent SQL injection
+$allowed_columns = ['title', 'full_name', 'quota', 'created_at'];
+if (!in_array($sort_column, $allowed_columns)) {
+    $sort_column = 'created_at';
+}
+
+// Validate sort order
+if ($sort_order != 'ASC' && $sort_order != 'DESC') {
+    $sort_order = 'DESC';
+}
+
 // Helper function to check skill matches
 function getSkillMatchPercentage($seekerSkills, $jobSkills)
 {
@@ -49,6 +64,22 @@ function areLocationsNearby($location1, $location2)
 
     // If there are at least 2 common parts, consider them nearby
     return count($common_parts) >= 2;
+}
+
+// Helper function to generate sort URL
+function getSortUrl($column, $currentSort, $currentOrder) {
+    $newOrder = ($currentSort === $column && $currentOrder === 'ASC') ? 'DESC' : 'ASC';
+    return "?sort=" . $column . "&order=" . $newOrder;
+}
+
+// Helper function to display sort indicator
+function getSortIndicator($column, $currentSort, $currentOrder) {
+    if ($currentSort !== $column) {
+        return '<i class="bi bi-arrow-down-up text-muted"></i>';
+    }
+    return ($currentOrder === 'ASC') ? 
+        '<i class="bi bi-sort-down-alt"></i>' : 
+        '<i class="bi bi-sort-down"></i>';
 }
 
 // Fetch all job postings
@@ -218,20 +249,32 @@ $users_result = $conn->query($sql);
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>Title</th>
-                                <th>Employer</th>
-                                <th>Quota</th>
+                                <th class="sortable <?php echo $sort_column === 'title' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('title', $sort_column, $sort_order); ?>" class="text-white text-decoration-none">
+                                        Title <?php echo getSortIndicator('title', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'full_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('full_name', $sort_column, $sort_order); ?>" class="text-white text-decoration-none">
+                                        Employer <?php echo getSortIndicator('full_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'quota' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('quota', $sort_column, $sort_order); ?>" class="text-white text-decoration-none">
+                                        Quota <?php echo getSortIndicator('quota', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
                                 <th>Candidates</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-                            // Fetch active job postings
+                            // Fetch active job postings with sorting
                             $sql = "SELECT job_postings.*, users.full_name 
                                     FROM job_postings 
                                     JOIN users ON job_postings.employer_id = users.user_id 
                                     WHERE job_postings.status = 'approved' 
-                                    ORDER BY job_postings.created_at DESC";
+                                    ORDER BY $sort_column $sort_order";
                             $active_jobs_result = $conn->query($sql);
 
                             if ($active_jobs_result->num_rows > 0) {

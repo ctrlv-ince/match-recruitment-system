@@ -8,7 +8,38 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
-// Fetch scheduled interviews
+// Get sort parameters
+$sort_column = isset($_GET['sort']) ? $_GET['sort'] : 'scheduled_date';
+$sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+
+// Validate sort column to prevent SQL injection
+$allowed_columns = ['candidate_name', 'job_title', 'company_name', 'scheduled_date', 'status'];
+if (!in_array($sort_column, $allowed_columns)) {
+    $sort_column = 'scheduled_date';
+}
+
+// Validate sort order
+if ($sort_order != 'ASC' && $sort_order != 'DESC') {
+    $sort_order = 'DESC';
+}
+
+// Helper function to generate sort URL
+function getSortUrl($column, $currentSort, $currentOrder) {
+    $newOrder = ($currentSort === $column && $currentOrder === 'ASC') ? 'DESC' : 'ASC';
+    return "?sort=" . $column . "&order=" . $newOrder;
+}
+
+// Helper function to display sort indicator
+function getSortIndicator($column, $currentSort, $currentOrder) {
+    if ($currentSort !== $column) {
+        return '<i class="bi bi-arrow-down-up text-muted"></i>';
+    }
+    return ($currentOrder === 'ASC') ? 
+        '<i class="bi bi-sort-down-alt"></i>' : 
+        '<i class="bi bi-sort-down"></i>';
+}
+
+// Fetch scheduled interviews with sorting
 $sql = "SELECT interviews.interview_id, interviews.scheduled_date, interviews.status, 
                interviews.notes, interviews.recommendation, 
                users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
@@ -17,7 +48,7 @@ $sql = "SELECT interviews.interview_id, interviews.scheduled_date, interviews.st
         JOIN users ON applications.seeker_id = users.user_id 
         JOIN job_postings ON applications.job_id = job_postings.job_id 
         JOIN employers ON job_postings.employer_id = employers.employer_id 
-        ORDER BY interviews.scheduled_date DESC";
+        ORDER BY $sort_column $sort_order";
 $interviews_result = $conn->query($sql);
 ?>
 
@@ -162,6 +193,35 @@ $interviews_result = $conn->query($sql);
     .table td:last-child {
         white-space: nowrap;
     }
+    
+    /* Sortable header styles */
+    .sortable {
+        cursor: pointer;
+        position: relative;
+        padding-right: 25px !important;
+    }
+
+    .sortable:hover {
+        background-color: #0857a2;
+    }
+
+    .sortable i {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Highlight the active sort column */
+    .sort-active {
+        background-color: #0857a2;
+    }
+    
+    /* Make sure links in headers are white and no underline */
+    .sortable a {
+        color: white;
+        text-decoration: none;
+    }
 </style>
 
 <body>
@@ -181,11 +241,31 @@ $interviews_result = $conn->query($sql);
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>Candidate Name</th>
-                                <th>Job Title</th>
-                                <th>Employer</th>
-                                <th>Scheduled Date</th>
-                                <th>Status</th>
+                                <th class="sortable <?php echo $sort_column === 'candidate_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('candidate_name', $sort_column, $sort_order); ?>">
+                                        Candidate Name <?php echo getSortIndicator('candidate_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'job_title' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('job_title', $sort_column, $sort_order); ?>">
+                                        Job Title <?php echo getSortIndicator('job_title', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'company_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('company_name', $sort_column, $sort_order); ?>">
+                                        Employer <?php echo getSortIndicator('company_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'scheduled_date' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('scheduled_date', $sort_column, $sort_order); ?>">
+                                        Scheduled Date <?php echo getSortIndicator('scheduled_date', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'status' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('status', $sort_column, $sort_order); ?>">
+                                        Status <?php echo getSortIndicator('status', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -256,3 +336,7 @@ $interviews_result = $conn->query($sql);
 
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

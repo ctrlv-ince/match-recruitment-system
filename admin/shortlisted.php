@@ -8,14 +8,45 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
-// Fetch shortlisted candidates
-$sql = "SELECT applications.application_id, users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name 
+// Get sort parameters
+$sort_column = isset($_GET['sort']) ? $_GET['sort'] : 'applied_at';
+$sort_order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+
+// Validate sort column to prevent SQL injection
+$allowed_columns = ['candidate_name', 'job_title', 'company_name', 'applied_at'];
+if (!in_array($sort_column, $allowed_columns)) {
+    $sort_column = 'applied_at';
+}
+
+// Validate sort order
+if ($sort_order != 'ASC' && $sort_order != 'DESC') {
+    $sort_order = 'DESC';
+}
+
+// Helper function to generate sort URL
+function getSortUrl($column, $currentSort, $currentOrder) {
+    $newOrder = ($currentSort === $column && $currentOrder === 'ASC') ? 'DESC' : 'ASC';
+    return "?sort=" . $column . "&order=" . $newOrder;
+}
+
+// Helper function to display sort indicator
+function getSortIndicator($column, $currentSort, $currentOrder) {
+    if ($currentSort !== $column) {
+        return '<i class="bi bi-arrow-down-up text-muted"></i>';
+    }
+    return ($currentOrder === 'ASC') ? 
+        '<i class="bi bi-sort-down-alt"></i>' : 
+        '<i class="bi bi-sort-down"></i>';
+}
+
+// Fetch shortlisted candidates with sorting
+$sql = "SELECT applications.application_id, users.full_name AS candidate_name, job_postings.title AS job_title, employers.company_name, applications.applied_at 
         FROM applications 
         JOIN users ON applications.seeker_id = users.user_id 
         JOIN job_postings ON applications.job_id = job_postings.job_id 
         JOIN employers ON job_postings.employer_id = employers.employer_id 
         WHERE applications.status = 'shortlisted' 
-        ORDER BY applications.applied_at DESC";
+        ORDER BY $sort_column $sort_order";
 $shortlisted_result = $conn->query($sql);
 ?>
 
@@ -145,6 +176,35 @@ $shortlisted_result = $conn->query($sql);
         color: #6c757d;
         padding: 20px;
     }
+    
+    /* Sortable header styles */
+    .sortable {
+        cursor: pointer;
+        position: relative;
+        padding-right: 25px !important;
+    }
+
+    .sortable:hover {
+        background-color: #0957a8;
+    }
+
+    .sortable i {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Highlight the active sort column */
+    .sort-active {
+        background-color: #0957a8;
+    }
+    
+    /* Make sure links in headers are white and no underline */
+    .sortable a {
+        color: white;
+        text-decoration: none;
+    }
 </style>
 
 <body>
@@ -164,9 +224,21 @@ $shortlisted_result = $conn->query($sql);
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>Candidate Name</th>
-                                <th>Job Title</th>
-                                <th>Employer</th>
+                                <th class="sortable <?php echo $sort_column === 'candidate_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('candidate_name', $sort_column, $sort_order); ?>">
+                                        Candidate Name <?php echo getSortIndicator('candidate_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'job_title' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('job_title', $sort_column, $sort_order); ?>">
+                                        Job Title <?php echo getSortIndicator('job_title', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
+                                <th class="sortable <?php echo $sort_column === 'company_name' ? 'sort-active' : ''; ?>">
+                                    <a href="<?php echo getSortUrl('company_name', $sort_column, $sort_order); ?>">
+                                        Employer <?php echo getSortIndicator('company_name', $sort_column, $sort_order); ?>
+                                    </a>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -220,3 +292,7 @@ $shortlisted_result = $conn->query($sql);
 
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
