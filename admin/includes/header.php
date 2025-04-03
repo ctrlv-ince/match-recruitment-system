@@ -65,6 +65,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="users.php">Users</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="reports.php"><i class="fas fa-chart-bar me-1"></i>Reports</a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <li><a class="dropdown-item" href="logout.php">Logout</a></li>

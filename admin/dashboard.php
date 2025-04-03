@@ -171,6 +171,14 @@ $recent_activity = $conn->query("SELECT job_postings.title, users.full_name, job
                         </a>
                     </div>
                     <div class="col-md-3 mb-4">
+                        <a href="reports.php" class="card h-100 text-decoration-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Reports</h5>
+                                <p class="card-text">View system analytics and reports.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-4">
                         <a href="pending_jobs.php" class="card h-100 text-decoration-none">
                             <div class="card-body">
                                 <h5 class="card-title">Pending Jobs</h5>

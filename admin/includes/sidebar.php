@@ -48,6 +48,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : ''; ?>" href="reports.php">
+                    <i class="bi bi-bar-chart"></i> Reports
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'feedbacks.php' ? 'active' : ''; ?>" href="feedbacks.php">
                     <i class="bi bi-chat-left-text"></i> Feedback
                 </a>
