@@ -174,9 +174,12 @@ $feedback_result = $conn->query($sql);
                     echo "<div class='card h-100'>";
                     echo "<div class='card-body'>";
                     echo "<h5 class='card-title'>{$row['title']}</h5>";
-                    echo "<p class='card-text'>{$row['description']}</p>";
+                    echo "<p class='card-text'>" . substr($row['description'], 0, 100) . "...</p>";
                     echo "<p class='card-text'><strong>Skills:</strong> {$row['skills']}</p>";
-                    echo "<a href='job_seeker/view_job.php?id={$row['job_id']}' class='btn btn-primary'>View Details</a>";
+                    echo "<button type='button' class='btn btn-primary view-job' data-bs-toggle='modal' data-bs-target='#jobModal' 
+                          data-id='{$row['job_id']}' data-title='{$row['title']}' data-description='{$row['description']}' 
+                          data-skills='{$row['skills']}' data-location='{$row['location']}'>
+                          View Details</button>";
                     echo "</div>";
                     echo "</div>";
                     echo "</div>";
@@ -185,6 +188,35 @@ $feedback_result = $conn->query($sql);
                 echo "<p class='text-center'>No jobs found.</p>";
             }
             ?>
+        </div>
+    </div>
+
+    <!-- Job Details Modal -->
+    <div class="modal fade" id="jobModal" tabindex="-1" aria-labelledby="jobModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobModalLabel">Job Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4 id="jobTitle"></h4>
+                    <div class="d-flex justify-content-between mb-3">
+                        <p><i class="fas fa-map-marker-alt me-2"></i> <span id="jobLocation"></span></p>
+                        
+                    </div>
+                    <h5>Description</h5>
+                    <p id="jobDescription"></p>
+                    <div class="job-skills">
+                        <h5>Required Skills</h5>
+                        <p id="jobSkills"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="job_seeker/login.php" class="btn btn-primary apply-btn">Apply Now</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -220,5 +252,28 @@ $feedback_result = $conn->query($sql);
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Handle job modal data
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobModal = document.getElementById('jobModal');
+            const viewButtons = document.querySelectorAll('.view-job');
+            
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const title = this.getAttribute('data-title');
+                    const description = this.getAttribute('data-description');
+                    const skills = this.getAttribute('data-skills');
+                    const location = this.getAttribute('data-location');
+                    const salary = this.getAttribute('data-salary');
+                    
+                    document.getElementById('jobTitle').textContent = title;
+                    document.getElementById('jobDescription').textContent = description;
+                    document.getElementById('jobSkills').textContent = skills;
+                    document.getElementById('jobLocation').textContent = location || 'Not specified';
+                    
+                });
+            });
+        });
+    </script>
 </body>
 </html>
